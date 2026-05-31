@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DASHBOARD TL · TELE-RIO · OPERAÇÕES</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -1034,14 +1033,7 @@ setInterval(updateCountdown, 1000);
 
 // ── BOTÃO SINCRONIZAR ────────────────────────────────────────
 function handleSync(){
-  const btn = document.querySelector('.btn-sync');
-  btn.innerHTML = '⟳ SINCRONIZANDO...';
-  btn.style.opacity = '0.7';
-  fetchAndRender().finally(()=>{
-    btn.innerHTML = '<span class="sync-icon">☁</span> SINCRONIZAR';
-    btn.style.opacity = '1';
-    secondsLeft = 180;
-  });
+  fetchAndRender(); // fetchAndRender já cuida do estado do botão
 }
 
 // ── PERÍODO SELECTOR ─────────────────────────────────────────
@@ -1094,33 +1086,102 @@ function shiftPeriod(dir){
 }
 
 // ══════════════════════════════════════════════════════════════
-//  PARSE CSV → DATA OBJECT
+//  PARSE CSV INLINE (sem dependência PapaParse) — padrão FleetControl Pro
 // ══════════════════════════════════════════════════════════════
-function parseCSV(csvText){
-  const parsed = Papa.parse(csvText, { header:true, skipEmptyLines:true });
-  const rows = parsed.data.filter(r => (r['OP']||'').trim() === 'TL');
+function splitLine(line, sep){
+  if(sep !== ',') return line.split(sep).map(c => c.trim().replace(/^"+|"+$/g,''));
+  const cols = []; let cur = '', inQ = false;
+  for(let c of line){
+    if(c === '"'){ inQ = !inQ; }
+    else if(c === sep && !inQ){ cols.push(cur.trim()); cur = ''; }
+    else { cur += c; }
+  }
+  cols.push(cur.trim());
+  return cols;
+}
 
-  // helpers
+function parseCSV(csvText){
+  const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+  if(!lines.length) return _emptyData();
+
+  // Detectar separador
+  const sep = lines[0].includes('\t') ? '\t' : (lines[0].split(';').length > lines[0].split(',').length ? ';' : ',');
+
+  // Encontrar linha de cabeçalho
+  let headerIdx = 0;
+  for(let i = 0; i < Math.min(5, lines.length); i++){
+    const u = lines[i].toUpperCase();
+    if(u.includes('DATA') && u.includes('OP') && (u.includes('MOTORISTA') || u.includes('VEICULO'))){ headerIdx = i; break; }
+  }
+
+  const rawHeaders = splitLine(lines[headerIdx], sep);
+  const headers = rawHeaders.map(h => h.trim().toUpperCase().replace(/[^A-Z0-9]/g,'_'));
+
+  // Localizadores de coluna — tolerante a acentos e variações
+  const ci = (...names) => {
+    for(const n of names){
+      const idx = headers.findIndex(h => h.includes(n));
+      if(idx >= 0) return idx;
+    }
+    return -1;
+  };
+
+  const iData  = ci('DATA');
+  const iOp    = ci('OP');
+  const iVeic  = ci('VEICULO');
+  const iMot   = ci('MOTORISTA');
+  const iDest  = ci('DESTINO');
+  const iSaidaV= ci('SA_DA_VE_CULO_CD','SAIDA_VEICULO_CD','SAIDA_VE_CULO','SA_DA_VEICULO');
+  const iKmP   = ci('KM_PERCORRIDO','KM_CHEGADA');
+  const iKmS   = ci('KM_SAIDA');
+  const iJorn  = ci('HORA_TOTAL_MOTORISTA','HORA_TOTAL');
+
+  // Parsear todas as linhas filtrando só OP=TL
+  const rawRows = [];
+  for(let i = headerIdx + 1; i < lines.length; i++){
+    const cols = splitLine(lines[i], sep);
+    if(cols.length < 4) continue;
+    const data = (cols[iData] || '').trim().replace(/"/g,'');
+    if(!data || !/\d{2}\/\d{2}\/\d{2,4}/.test(data)) continue;
+    const op = (cols[iOp] || '').trim().toUpperCase();
+    if(op !== 'TL') continue;
+    rawRows.push({
+      data,
+      op,
+      veiculo  : (cols[iVeic]  || '').trim(),
+      motorista: (cols[iMot]   || '').trim().toUpperCase(),
+      destino  : iDest  >= 0 ? (cols[iDest]  || '').trim().replace(/^"+|"+$/g,'') : '',
+      saida_v  : iSaidaV >= 0 ? (cols[iSaidaV]|| '').trim() : '',
+      kmPercorr: iKmP >= 0 ? parseInt((cols[iKmP]||'').replace(/\D/g,'')) || 0 : 0,
+      kmSaida  : iKmS >= 0 ? parseInt((cols[iKmS]||'').replace(/\D/g,'')) || 0 : 0,
+      jornRaw  : iJorn >= 0 ? (cols[iJorn] || '').trim() : '',
+    });
+  }
+
+  // helpers internos
   const toMin = t => {
     if(!t) return 0;
     const p = (t+'').trim().split(':');
-    if(p.length<2) return 0;
+    if(p.length < 2) return 0;
     return parseInt(p[0]||0)*60 + parseInt(p[1]||0);
   };
-  const parseKm = v => { const n=parseInt((v||'').replace(/\D/g,'')); return isNaN(n)?0:n; };
   const parseDate = s => {
     if(!s) return null;
     const p = s.trim().split('/');
-    if(p.length!==3) return null;
+    if(p.length !== 3) return null;
     const [d,m,y] = p;
-    return new Date(`20${y.length===2?y:y.slice(2)}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+    const fullY = y.length === 2 ? '20'+y : y;
+    return new Date(`${fullY}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
   };
-  const monthKey = dt => dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` : null;
+  const monthKey   = dt => dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` : null;
   const monthLabel = key => {
     const [y,m] = key.split('-');
     const names = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
     return `${names[parseInt(m)-1]}/${y}`;
   };
+
+  // Filtrar rows com OP já garantido = TL
+  const rows = rawRows;
 
   // Acumuladores
   const byMonth   = {};
@@ -1133,13 +1194,14 @@ function parseCSV(csvText){
   const dates = new Set();
 
   rows.forEach(r => {
-    const dt    = parseDate(r['DATA']);
-    const km    = parseKm(r['KM_PERCORRIDO']);
-    const vei   = (r['VEICULO']||'').trim();
-    const mot   = (r['MOTORISTA']||'').trim();
-    const dest  = (r['DESTINO']||'').trim();
-    const saida = (r['SAÍDA_VEÍCULO_CD']||'').trim();
-    const jorn  = toMin(r['HORA_TOTAL_MOTORISTA']);
+    const dt    = parseDate(r.data);
+    const km    = r.kmPercorr > 0 ? r.kmPercorr : (r.kmSaida > 0 ? 0 : 0); // km percorrido direto
+    const kmFinal = r.kmPercorr; // já é km percorrido
+    const vei   = r.veiculo.trim();
+    const mot   = r.motorista.trim();
+    const dest  = r.destino.trim();
+    const saida = r.saida_v.trim();
+    const jorn  = toMin(r.jornRaw);
 
     if(dt) dates.add(dt.toDateString());
 
@@ -1148,19 +1210,19 @@ function parseCSV(csvText){
     if(mk){
       if(!byMonth[mk]) byMonth[mk] = { trips:0, km:0, validKm:0, label:monthLabel(mk), key:mk };
       byMonth[mk].trips++;
-      byMonth[mk].km += km;
-      if(km>0) byMonth[mk].validKm++;
+      byMonth[mk].km += kmFinal;
+      if(kmFinal > 0) byMonth[mk].validKm++;
     }
 
     // KM total
-    totalKm += km;
-    if(km > 0) validKmTrips++;
+    totalKm += kmFinal;
+    if(kmFinal > 0) validKmTrips++;
 
     // Por veículo
     if(vei){
       if(!byVehicle[vei]) byVehicle[vei] = { id:vei, trips:0, km:0, jornMin:0, jornN:0 };
       byVehicle[vei].trips++;
-      byVehicle[vei].km += km;
+      byVehicle[vei].km += kmFinal;
       if(jorn > 0 && jorn < 900){ byVehicle[vei].jornMin += jorn; byVehicle[vei].jornN++; }
     }
 
@@ -1168,7 +1230,7 @@ function parseCSV(csvText){
     if(mot){
       if(!byDriver[mot]) byDriver[mot] = { nome:mot, viagens:0, km:0 };
       byDriver[mot].viagens++;
-      byDriver[mot].km += km;
+      byDriver[mot].km += kmFinal;
     }
 
     // Jornada global
@@ -1179,9 +1241,9 @@ function parseCSV(csvText){
     if(m){ const k=`${m[1].padStart(2,'0')} - ${m[2].trim()}`; lojaCount[k]=(lojaCount[k]||0)+1; }
 
     // Dia da semana
-    if(dt) weekday[dt.getDay()] = (weekday[dt.getDay()]||0)+1;
+    if(dt) weekday[dt.getDay()] = (weekday[dt.getDay()]||0) + 1;
 
-    // Hora de saída
+    // Hora de saída do veículo
     if(saida){ const h=parseInt(saida.split(':')[0]); if(!isNaN(h)) hourCount[h]=(hourCount[h]||0)+1; }
   });
 
@@ -1647,23 +1709,62 @@ function renderAll(){
 }
 
 // ══════════════════════════════════════════════════════════════
-//  FETCH + PARSE + RENDER
+//  EMPTY DATA (fallback)
 // ══════════════════════════════════════════════════════════════
+function _emptyData(){
+  return { totalTrips:0, totalKm:0, validKmTrips:0, frota:0, motoristas:0,
+    avgJornada:0, avgKmViagem:0, eficiencia:0, diasNaBase:0,
+    byMonth:{}, sortedMonths:[], vehicles:[], motoristasData:[],
+    lojaTop:[], weekdays:['Seg','Ter','Qua','Qui','Sex','Sáb'],
+    weekdayTrips:[0,0,0,0,0,0], hoursLabels:[], hourTrips:[],
+    slope:0, intercept:0, n:0, projKm:Array(12).fill(null) };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FETCH — padrão FleetControl Pro (sem PapaParse)
+// ══════════════════════════════════════════════════════════════
+const GKEY_URL       = 'tl_sheets_url';
+const GKEY_LASTSYNC  = 'tl_sheets_lastsync';
+let sheetsTimer = null;
+
 async function fetchAndRender(){
+  // Pega URL do localStorage ou usa a padrão hardcoded
+  const url = (localStorage.getItem(GKEY_URL) || CSV_URL) + '&_t=' + Date.now();
+
+  // Feedback visual no botão
+  const btn   = document.querySelector('.btn-sync');
+  const badge = document.querySelector('.badge-ao-vivo');
+  if(btn){ btn.innerHTML = '⟳ SINCRONIZANDO...'; btn.style.opacity = '0.7'; btn.disabled = true; }
+
   try {
-    // Bust cache para garantir dados frescos
-    const url = CSV_URL + '&_t=' + Date.now();
-    const res = await fetch(url, { cache:'no-store' });
+    const res = await fetch(url, { cache: 'no-store' });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const csvText = await res.text();
+    if(!csvText || csvText.length < 50) throw new Error('Resposta vazia ou inválida');
+
     DATA = parseCSV(csvText);
+    if(!DATA || DATA.totalTrips === 0) throw new Error('Nenhum registro TL encontrado no CSV');
+
     renderAll();
-    console.log(`[TL Dashboard] Sync OK — ${DATA.totalTrips} registros TL — ${new Date().toLocaleTimeString('pt-BR')}`);
+
+    // Salva timestamp da última sync
+    localStorage.setItem(GKEY_LASTSYNC, Date.now().toString());
+    const ts = new Date().toLocaleTimeString('pt-BR');
+    console.log(`[TL Dashboard] ✅ Sync OK — ${DATA.totalTrips} registros TL — ${ts}`);
+
+    // Atualiza badge "Ao Vivo" para verde por 3s
+    if(badge){ badge.style.background='linear-gradient(135deg,#1a7a3a,#0d5228)'; badge.style.color='#00ff9f'; badge.style.borderColor='rgba(0,255,159,0.4)'; setTimeout(()=>{ badge.style.background=''; badge.style.color=''; badge.style.borderColor=''; }, 3000); }
+
   } catch(err){
-    console.error('[TL Dashboard] Erro ao sincronizar:', err);
-    // Mostra erro não-fatal na status bar
-    const el = document.getElementById('update-time');
-    if(el) el.textContent = `ERRO: ${err.message} — tentando novamente em 3 min`;
+    console.error('[TL Dashboard] ❌ Erro ao sincronizar:', err.message);
+    // Mostra erro na status bar sem travar o dashboard
+    const el = document.getElementById('last-update');
+    if(el) el.innerHTML = `⚠️ ERRO NA SINCRONIZAÇÃO: ${err.message} — tentando novamente em 3 min &nbsp;|&nbsp; PRÓXIMA EM: <span id="next-update">3:00</span>`;
+    if(badge){ badge.style.background='linear-gradient(135deg,#7a1a1a,#5c1010)'; badge.style.color='#ff3860'; setTimeout(()=>{ badge.style.background=''; badge.style.color=''; }, 5000); }
+
+  } finally {
+    if(btn){ btn.innerHTML = '<span class="sync-icon">☁</span> SINCRONIZAR'; btn.style.opacity = '1'; btn.disabled = false; }
+    secondsLeft = 180;
   }
 }
 
@@ -1671,16 +1772,24 @@ async function fetchAndRender(){
 //  INICIALIZAÇÃO
 // ══════════════════════════════════════════════════════════════
 window.addEventListener('load', async () => {
-  // Esconde loading após fetch inicial
+  // Salva a URL padrão no localStorage na primeira vez
+  if(!localStorage.getItem(GKEY_URL)){
+    localStorage.setItem(GKEY_URL, CSV_URL);
+  }
+
+  // 1ª sincronização
   await fetchAndRender();
+
+  // Esconde loading
   const loading = document.getElementById('loading');
   if(loading){
     loading.style.transition = 'opacity 0.6s';
     loading.style.opacity = '0';
-    setTimeout(()=>loading.remove(), 600);
+    setTimeout(() => loading.remove(), 600);
   }
-  // Auto-refresh a cada 3 minutos
-  setInterval(fetchAndRender, REFRESH_INTERVAL);
+
+  // Timer de auto-refresh a cada 3 minutos
+  sheetsTimer = setInterval(fetchAndRender, REFRESH_INTERVAL);
 });
 </script>
 </body>
