@@ -3,1794 +3,997 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DASHBOARD TL · TELE-RIO · OPERAÇÕES</title>
+<title>TELE-RIO · FleetControl Pro · Dashboard TL</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg-deep: #020508;
-    --bg-panel: #040d14;
-    --bg-card: #071422;
-    --bg-card2: #091929;
-    --border: #0d3a5c;
-    --border-glow: #1a6494;
-    --accent: #00d4ff;
-    --accent2: #00ff9f;
-    --accent3: #ff6b35;
-    --accent4: #ffd700;
-    --text-primary: #e8f4fd;
-    --text-secondary: #7ab3cc;
-    --text-muted: #3a6a85;
-    --danger: #ff3860;
-    --warn: #ffdd57;
-    --success: #00ff9f;
-    --grid-line: rgba(0,212,255,0.05);
-    --scan-line: rgba(0,212,255,0.03);
-  }
+:root{
+  --bg:#020508;--bg2:#040d14;--bg3:#071422;--card:#091929;
+  --border:#0d3a5c;--border2:#1a6494;
+  --accent:#00d4ff;--green:#00ff9f;--orange:#ff6b35;--gold:#ffd700;--purple:#a78bfa;--red:#ff3860;
+  --text:#e8f4fd;--text2:#7ab3cc;--text3:#3a6a85;
+  --blue:#1a6fc4;--blue-dark:#0d4a8a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,0.02) 2px,rgba(0,212,255,0.02) 4px);pointer-events:none;z-index:9999;}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+/* ── HEADER ── */
+header{position:sticky;top:0;z-index:200;background:#0b1929;border-bottom:2px solid #0d3a5c;flex-shrink:0;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;gap:12px;flex-wrap:wrap;}
+.logo-block{display:flex;align-items:center;gap:0;flex-shrink:0;}
+.logo-badge{background:linear-gradient(135deg,#00aaff,#0066cc);color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;letter-spacing:1px;padding:6px 12px;border-radius:6px 0 0 6px;display:flex;flex-direction:column;align-items:center;line-height:1.1;box-shadow:0 0 16px rgba(0,170,255,0.4);animation:logoGlow 3s ease-in-out infinite;}
+.logo-badge .bm{font-size:13px;font-weight:900;letter-spacing:2px;}
+.logo-badge .bs{font-size:7px;font-weight:400;letter-spacing:1px;opacity:.85;}
+@keyframes logoGlow{0%,100%{box-shadow:0 0 16px rgba(0,170,255,0.4);}50%{box-shadow:0 0 28px rgba(0,170,255,0.7);}}
+.logo-text{background:#0d2035;border:1px solid #1a4a70;border-left:none;padding:6px 14px;border-radius:0 6px 6px 0;display:flex;flex-direction:column;justify-content:center;}
+.logo-text .fleet{font-size:16px;font-weight:700;color:#e8f4fd;letter-spacing:.5px;}
+.logo-text .fleet span{color:#00aaff;}
+.logo-text .sys-sub{font-size:9px;letter-spacing:2px;color:#3a6a85;text-transform:uppercase;margin-top:1px;}
+.hdr-center{display:flex;align-items:center;gap:10px;flex:1;justify-content:center;flex-wrap:wrap;}
+.btn-sync{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1a7a3a,#0d5228);color:#00ff9f;border:1px solid rgba(0,255,159,0.4);padding:8px 18px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase;box-shadow:0 0 12px rgba(0,255,159,0.2);}
+.btn-sync:hover{box-shadow:0 0 20px rgba(0,255,159,0.4);}
+.btn-sync:disabled{opacity:.5;cursor:not-allowed;}
+.btn-sync.syncing{background:linear-gradient(135deg,#7a1a1a,#5c1010)!important;color:#ff3860!important;border-color:rgba(255,56,96,0.4)!important;animation:pulseRed .8s infinite;}
+@keyframes pulseRed{0%,100%{box-shadow:0 0 12px rgba(255,56,96,0.4);}50%{box-shadow:0 0 24px rgba(255,56,96,0.8);}}
+.badge-reg{display:flex;align-items:center;gap:8px;background:#0d2035;border:1px solid #1a4a70;border-radius:6px;padding:6px 14px;font-size:12px;color:#7ab3cc;letter-spacing:1px;}
+.badge-reg .rn{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:#00d4ff;}
+.badge-reg .rd{font-family:'Share Tech Mono',monospace;font-size:11px;color:#00ff9f;}
+.badge-live{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#7a1a1a,#5c1010);border:1px solid rgba(255,56,96,0.4);border-radius:6px;padding:8px 16px;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#ff3860;letter-spacing:2px;box-shadow:0 0 12px rgba(255,56,96,0.25);animation:liveGlow 2s ease-in-out infinite;}
+@keyframes liveGlow{0%,100%{box-shadow:0 0 12px rgba(255,56,96,0.25);}50%{box-shadow:0 0 24px rgba(255,56,96,0.5);}}
+.live-dot{width:8px;height:8px;background:#ff3860;border-radius:50%;animation:pulseDot 1s ease-in-out infinite;box-shadow:0 0 8px #ff3860;}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.7);}}
+.sync-status{font-size:10px;padding:4px 10px;border-radius:12px;font-weight:700;letter-spacing:.5px;white-space:nowrap;}
+.sync-ok{background:rgba(0,255,159,.15);border:1px solid rgba(0,255,159,.4);color:#00ff9f;}
+.sync-err{background:rgba(255,56,96,.15);border:1px solid rgba(255,56,96,.4);color:#ff3860;}
+.sync-loading{background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.4);color:#00d4ff;}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;}
+#date-display{font-family:'Rajdhani',sans-serif;font-size:13px;color:#e8f4fd;font-weight:600;letter-spacing:1px;}
+#clock-display{font-family:'Share Tech Mono',monospace;font-size:18px;color:#00d4ff;letter-spacing:3px;text-shadow:0 0 16px rgba(0,212,255,0.5);}
+.hdr-sub{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:38px;background:#061120;border-top:1px solid #0d3a5c;gap:16px;flex-wrap:wrap;}
+.hdr-sub-left{display:flex;align-items:center;gap:10px;font-size:12px;}
+.sub-label{color:#3a6a85;letter-spacing:2px;text-transform:uppercase;font-size:11px;display:flex;align-items:center;gap:6px;}
+.nav-btn{background:#0d2035;border:1px solid #1a4a70;color:#7ab3cc;width:22px;height:22px;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;}
+.nav-btn:hover{background:#1a3a5c;color:#e8f4fd;}
+.date-select{background:#0d2035;border:1px solid #1a4a70;color:#e8f4fd;padding:3px 10px;border-radius:4px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.5px;min-width:200px;}
+.date-select option{background:#0d2035;}
+.hdr-sub-right{font-size:11px;color:#3a6a85;letter-spacing:1px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.hl{color:#ffd700;font-weight:600;}
+.hl-blue{color:#00d4ff;}
+.hl-green{color:#00ff9f;}
+.hl-orange{color:#ff6b35;}
 
-  body {
-    background: var(--bg-deep);
-    color: var(--text-primary);
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 400;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;background:var(--bg);z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.loader-text{font-family:'Orbitron',sans-serif;font-size:18px;letter-spacing:6px;color:#00d4ff;animation:fadeInOut 1.5s ease-in-out infinite;}
+@keyframes fadeInOut{0%,100%{opacity:.3}50%{opacity:1}}
+.loader-bar{width:300px;height:2px;background:#0d3a5c;border-radius:1px;overflow:hidden;}
+.loader-prog{height:100%;background:linear-gradient(90deg,transparent,#00d4ff,transparent);animation:scanBar 1.2s linear infinite;}
+@keyframes scanBar{from{transform:translateX(-100%)}to{transform:translateX(400%)}}
 
-  /* SCAN LINES EFFECT */
-  body::before {
-    content:'';
-    position:fixed;
-    inset:0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      var(--scan-line) 2px,
-      var(--scan-line) 4px
-    );
-    pointer-events:none;
-    z-index:9999;
-  }
+/* ── MAIN ── */
+main{position:relative;z-index:5;padding:18px 20px 40px;}
 
-  /* GRID BACKGROUND */
-  body::after {
-    content:'';
-    position:fixed;
-    inset:0;
-    background-image:
-      linear-gradient(var(--grid-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events:none;
-    z-index:0;
-  }
+/* ── OP STRIP (VISÃO DO DIA) ── */
+.sec{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#7ab3cc;margin-bottom:10px;padding-left:9px;border-left:3px solid #00d4ff;display:flex;align-items:center;gap:10px;}
+.op-strip{display:flex;align-items:stretch;gap:0;margin-bottom:16px;background:#071422;border:1px solid #0d3a5c;border-radius:10px;overflow:hidden;}
+.op-strip-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px;gap:2px;border-right:1px solid #0d3a5c;transition:background .2s;}
+.op-strip-item:last-child{border-right:none;}
+.op-strip-item:hover{background:#091929;}
+.op-sig{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;line-height:1;}
+.op-num{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;line-height:1;}
+.op-lbl{font-size:9px;color:#3a6a85;letter-spacing:.5px;text-transform:uppercase;}
+.op-sub{font-size:9px;letter-spacing:.3px;}
+.op-bar{width:100%;height:3px;border-radius:2px;margin-top:4px;}
 
-  /* ===== HEADER FLEETCONTROL PRO STYLE ===== */
-  header {
-    position:relative;
-    z-index:10;
-    background: #0b1929;
-    border-bottom: 2px solid #0d3a5c;
-    flex-shrink:0;
-  }
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px;}
+.kpi-card{background:#071422;border:1px solid #0d3a5c;border-radius:9px;padding:10px 12px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
+.kpi-card:hover{transform:translateY(-2px);border-color:#1a6494;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kc,#00d4ff);box-shadow:0 0 8px var(--kc,#00d4ff);}
+.kpi-icon{font-size:18px;margin-bottom:2px;opacity:.7;}
+.kpi-val{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--kc,#00d4ff);line-height:1;text-shadow:0 0 10px var(--kc,#00d4ff);}
+.kpi-lbl{font-size:10px;color:#7ab3cc;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+.kpi-sub{font-size:10px;color:#3a6a85;margin-top:1px;}
 
-  /* TOP BAR */
-  .hdr-top {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 20px;
-    height:58px;
-    gap:12px;
-    flex-wrap:wrap;
-  }
+/* ── DATE BAR (VISÃO DO DIA) ── */
+.day-bar{background:#071422;border:1px solid #0d3a5c;border-radius:10px;padding:12px 16px;margin-bottom:16px;}
+.day-bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.day-bar-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:#7ab3cc;}
+.day-info{font-size:11px;color:#3a6a85;letter-spacing:.5px;}
+.day-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.day-kpi{background:#091929;border:1px solid #0d3a5c;border-radius:6px;padding:8px 10px;text-align:center;}
+.day-kpi-val{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;line-height:1;}
+.day-kpi-lbl{font-size:9px;color:#3a6a85;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.day-kpi-sub{font-size:9px;margin-top:1px;}
 
-  /* LOGO BLOCK */
-  .logo-block {
-    display:flex;
-    align-items:center;
-    gap:0;
-    flex-shrink:0;
-  }
-  .logo-badge {
-    background: linear-gradient(135deg,#00aaff,#0066cc);
-    color:#fff;
-    font-family:'Orbitron',sans-serif;
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:1px;
-    padding:6px 12px;
-    border-radius:6px 0 0 6px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    line-height:1.1;
-    box-shadow:0 0 16px rgba(0,170,255,0.4);
-    animation: logoGlow 3s ease-in-out infinite;
-  }
-  .logo-badge .brand-main { font-size:13px; font-weight:900; letter-spacing:2px; }
-  .logo-badge .brand-sub  { font-size:7px;  font-weight:400; letter-spacing:1px; opacity:0.85; }
-  @keyframes logoGlow {
-    0%,100%{ box-shadow:0 0 16px rgba(0,170,255,0.4); }
-    50%{ box-shadow:0 0 28px rgba(0,170,255,0.7); }
-  }
-  .logo-text {
-    background:#0d2035;
-    border:1px solid #1a4a70;
-    border-left:none;
-    padding:6px 14px;
-    border-radius:0 6px 6px 0;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-  }
-  .logo-text .fleet { font-size:16px; font-weight:700; color:#e8f4fd; letter-spacing:0.5px; }
-  .logo-text .fleet span { color:#00aaff; }
-  .logo-text .sys-sub { font-size:9px; letter-spacing:2px; color:#3a6a85; text-transform:uppercase; margin-top:1px; }
+/* ── DRIVER GRID ── */
+.driver-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;}
+.dr-card{background:#071422;border:1px solid #0d3a5c;border-radius:8px;padding:10px 11px;display:flex;align-items:center;gap:9px;transition:border-color .2s,transform .2s;}
+.dr-card:hover{border-color:#1a6494;transform:translateY(-1px);}
+.dr-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue-dark,#0d4a8a),var(--blue,#1a6fc4));display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:white;flex-shrink:0;border:2px solid #1a6494;}
+.dr-info{flex:1;min-width:0;}
+.dr-name{font-size:12px;font-weight:600;color:#e8f4fd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dr-ops{font-size:10px;color:#7ab3cc;margin-top:1px;}
+.dr-placa{font-family:'Share Tech Mono',monospace;font-size:9px;color:#ffd700;margin-top:2px;}
+.dr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.transito-badge{display:inline-flex;align-items:center;gap:4px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;background:rgba(0,212,255,.18);border:1px solid rgba(0,212,255,.4);color:#00d4ff;font-family:'Orbitron',sans-serif;letter-spacing:.5px;}
+.transito-dot{width:5px;height:5px;border-radius:50%;background:#00d4ff;display:inline-block;animation:pulseDot 1.4s infinite;}
+.prog-badge{display:inline-flex;align-items:center;gap:4px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-family:'Orbitron',sans-serif;letter-spacing:.5px;}
+.fin-badge{display:inline-flex;align-items:center;gap:4px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;background:rgba(0,255,159,.15);border:1px solid rgba(0,255,159,.4);color:#00ff9f;font-family:'Orbitron',sans-serif;letter-spacing:.5px;}
 
-  /* CENTER BUTTONS */
-  .hdr-center {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex:1;
-    justify-content:center;
-    flex-wrap:wrap;
-  }
+/* ── ROUTE TABLE ── */
+.tbl-wrap{background:#071422;border:1px solid #0d3a5c;border-radius:10px;padding:16px;margin-bottom:16px;overflow-x:auto;}
+.fleet-table{width:100%;border-collapse:collapse;font-size:11px;}
+.fleet-table th{font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#3a6a85;padding:7px 10px;border-bottom:2px solid #0d3a5c;text-align:left;white-space:nowrap;}
+.fleet-table td{padding:8px 10px;border-bottom:1px solid rgba(13,58,92,.5);color:#e8f4fd;white-space:nowrap;}
+.fleet-table tr:last-child td{border-bottom:none;}
+.fleet-table tr:hover td{background:rgba(0,212,255,.03);}
+.fleet-table tr.tr-transito td{background:rgba(0,212,255,.04);}
+.fleet-table tr.tr-prog td{background:rgba(255,215,0,.04);}
+.fleet-table tr.tr-fin td{background:rgba(0,255,159,.04);}
+.op-tl{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'Orbitron',sans-serif;letter-spacing:.5px;background:rgba(0,212,255,.15);color:#00d4ff;border:1px solid rgba(0,212,255,.4);}
 
-  .btn-sync {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background: linear-gradient(135deg,#1a7a3a,#0d5228);
-    color:#00ff9f;
-    border:1px solid #00ff9f44;
-    padding:8px 18px;
-    border-radius:6px;
-    font-family:'Rajdhani',sans-serif;
-    font-size:13px;
-    font-weight:700;
-    letter-spacing:2px;
-    cursor:pointer;
-    transition:all 0.2s;
-    text-transform:uppercase;
-    box-shadow:0 0 12px rgba(0,255,159,0.2);
-  }
-  .btn-sync:hover { background:linear-gradient(135deg,#1e9444,#0f6030); box-shadow:0 0 20px rgba(0,255,159,0.35); }
-  .btn-sync .sync-icon { font-size:16px; }
+/* ── CHARTS ── */
+.charts-row{display:grid;gap:14px;margin-bottom:16px;}
+.cols-2{grid-template-columns:2fr 1fr;}
+.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.cols-22{grid-template-columns:1fr 1fr;}
+.panel{background:#071422;border:1px solid #0d3a5c;border-radius:10px;padding:16px;position:relative;overflow:hidden;}
+.panel::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle at top right,rgba(0,212,255,.05),transparent);pointer-events:none;}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;color:#7ab3cc;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #0d3a5c;display:flex;align-items:center;gap:8px;}
+.panel-title .dot{width:6px;height:6px;border-radius:50%;background:var(--pa,#00d4ff);box-shadow:0 0 8px var(--pa,#00d4ff);flex-shrink:0;}
+.forecast-note{font-size:10px;color:#3a6a85;letter-spacing:1px;text-align:center;margin-top:6px;}
 
-  .badge-registros {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background:#0d2035;
-    border:1px solid #1a4a70;
-    border-radius:6px;
-    padding:6px 14px;
-    font-size:12px;
-    color:#7ab3cc;
-    letter-spacing:1px;
-  }
-  .badge-registros .reg-num {
-    font-family:'Orbitron',sans-serif;
-    font-size:13px;
-    font-weight:700;
-    color:#00d4ff;
-  }
-  .badge-registros .reg-sep { color:#1a4a70; }
-  .badge-registros .reg-days {
-    font-family:'Share Tech Mono',monospace;
-    font-size:11px;
-    color:#00ff9f;
-  }
+/* ── VEHICLE TABLE ── */
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:#3a6a85;text-transform:uppercase;padding:7px 10px;text-align:left;border-bottom:1px solid #0d3a5c;white-space:nowrap;}
+.data-table td{padding:9px 10px;border-bottom:1px solid rgba(13,58,92,.4);color:#e8f4fd;vertical-align:middle;}
+.data-table tr:hover td{background:rgba(0,212,255,.03);}
+.data-table tr:last-child td{border-bottom:none;}
+.vbadge{font-family:'Share Tech Mono',monospace;font-size:10px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);padding:3px 7px;border-radius:2px;color:#00d4ff;white-space:nowrap;}
+.bar-inline{display:flex;align-items:center;gap:7px;}
+.bar-track{flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;}
+.bar-val{font-family:'Share Tech Mono',monospace;font-size:10px;color:#7ab3cc;min-width:40px;text-align:right;}
 
-  .badge-ao-vivo {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background:linear-gradient(135deg,#7a1a1a,#5c1010);
-    border:1px solid #ff386044;
-    border-radius:6px;
-    padding:8px 16px;
-    font-family:'Orbitron',sans-serif;
-    font-size:12px;
-    font-weight:700;
-    color:#ff3860;
-    letter-spacing:2px;
-    box-shadow:0 0 12px rgba(255,56,96,0.25);
-    animation:liveGlow 2s ease-in-out infinite;
-  }
-  @keyframes liveGlow {
-    0%,100%{ box-shadow:0 0 12px rgba(255,56,96,0.25); }
-    50%{ box-shadow:0 0 24px rgba(255,56,96,0.5); }
-  }
-  .live-dot {
-    width:8px;height:8px;
-    background:#ff3860;
-    border-radius:50%;
-    animation:pulse 1s ease-in-out infinite;
-    box-shadow:0 0 8px #ff3860;
-  }
+/* ── LOJA LIST ── */
+.loja-list{display:flex;flex-direction:column;gap:7px;}
+.loja-item{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;}
+.loja-rank{font-family:'Share Tech Mono',monospace;font-size:10px;color:#3a6a85;text-align:center;}
+.loja-name{font-size:12px;color:#e8f4fd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.loja-count{font-family:'Share Tech Mono',monospace;font-size:11px;text-align:right;min-width:28px;}
 
-  /* RIGHT CLOCK */
-  .hdr-right {
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    flex-shrink:0;
-  }
-  #date-display {
-    font-family:'Rajdhani',sans-serif;
-    font-size:13px;
-    color:#e8f4fd;
-    font-weight:600;
-    letter-spacing:1px;
-    text-align:right;
-  }
-  #clock-display {
-    font-family:'Share Tech Mono',monospace;
-    font-size:18px;
-    color:#00d4ff;
-    letter-spacing:3px;
-    text-shadow:0 0 16px rgba(0,212,255,0.5);
-    text-align:right;
-  }
+/* ── PROJ GRID ── */
+.proj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.proj-item{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:6px;padding:12px;text-align:center;}
+.proj-label{font-size:9px;letter-spacing:2px;color:#3a6a85;text-transform:uppercase;margin-bottom:5px;}
+.proj-val{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,.4);}
+.proj-note{font-size:9px;color:#3a6a85;margin-top:3px;letter-spacing:.5px;}
 
-  /* SUB BAR */
-  .hdr-sub {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 20px;
-    height:38px;
-    background:#061120;
-    border-top:1px solid #0d3a5c;
-    gap:16px;
-    flex-wrap:wrap;
-  }
-  .hdr-sub-left {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size:12px;
-  }
-  .sub-label {
-    color:#3a6a85;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    font-size:11px;
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .nav-btn {
-    background:#0d2035;
-    border:1px solid #1a4a70;
-    color:#7ab3cc;
-    width:22px;height:22px;
-    border-radius:3px;
-    cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    font-size:12px;
-    transition:all 0.15s;
-  }
-  .nav-btn:hover { background:#1a3a5c; color:#e8f4fd; }
-  .date-select {
-    background:#0d2035;
-    border:1px solid #1a4a70;
-    color:#e8f4fd;
-    padding:3px 10px;
-    border-radius:4px;
-    font-family:'Rajdhani',sans-serif;
-    font-size:13px;
-    font-weight:600;
-    cursor:pointer;
-    letter-spacing:0.5px;
-    min-width:180px;
-  }
-  .date-select option { background:#0d2035; }
+/* ── MOT GRID ── */
+.mot-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mot-item{background:rgba(255,255,255,.02);border:1px solid #0d3a5c;border-radius:4px;padding:9px 11px;display:flex;flex-direction:column;gap:3px;}
+.mot-name{font-size:12px;font-weight:600;color:#e8f4fd;letter-spacing:.5px;}
+.mot-stat{font-family:'Share Tech Mono',monospace;font-size:10px;color:#7ab3cc;}
 
-  .hdr-sub-right {
-    font-size:11px;
-    color:#3a6a85;
-    letter-spacing:1px;
-    display:flex;
-    align-items:center;
-    gap:6px;
-    flex-wrap:wrap;
-  }
-  .hdr-sub-right .hl { color:#ffd700; font-weight:600; }
-  .hdr-sub-right .hl-green { color:#00ff9f; }
-  .hdr-sub-right .hl-orange { color:#ff6b35; }
+/* ── STATUS BAR ── */
+#status-bar{font-size:10px;color:#3a6a85;text-align:center;padding:10px;letter-spacing:.5px;}
 
-  @keyframes pulse {
-    0%,100%{ opacity:1; transform:scale(1); }
-    50%{ opacity:0.3; transform:scale(0.7); }
-  }
-  .refresh-badge {
-    font-size:11px;
-    color:var(--text-muted);
-    letter-spacing:1px;
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .refresh-dot {
-    width:6px;height:6px;
-    background:var(--accent2);
-    border-radius:50%;
-    animation: pulse 2s ease-in-out infinite;
-  }
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#00ff9f;color:#020508;padding:11px 20px;border-radius:9px;font-weight:700;font-size:12px;opacity:0;transform:translateY(10px);transition:all .3s;z-index:9999;pointer-events:none;font-family:'Orbitron',sans-serif;letter-spacing:1px;}
+.toast.show{opacity:1;transform:translateY(0);}
 
-  /* MAIN LAYOUT */
-  main {
-    position:relative;
-    z-index:5;
-    padding:24px 24px 40px;
-    display:grid;
-    gap:20px;
-  }
+/* ── NO DATA ── */
+.no-data-day{text-align:center;padding:40px 20px;color:#3a6a85;}
+.no-data-day .ni{font-size:42px;margin-bottom:10px;}
 
-  /* KPI STRIP */
-  .kpi-strip {
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
-    gap:14px;
-  }
-
-  .kpi-card {
-    background: var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:4px;
-    padding:16px 20px;
-    position:relative;
-    overflow:hidden;
-    transition: border-color 0.3s, box-shadow 0.3s;
-    cursor:default;
-  }
-  .kpi-card::before {
-    content:'';
-    position:absolute;
-    top:0; left:0; right:0;
-    height:2px;
-    background: var(--kpi-color, var(--accent));
-    box-shadow: 0 0 12px var(--kpi-color, var(--accent));
-  }
-  .kpi-card:hover {
-    border-color: var(--border-glow);
-    box-shadow:0 0 20px rgba(0,212,255,0.1);
-  }
-  .kpi-label {
-    font-size:11px;
-    letter-spacing:2px;
-    color:var(--text-muted);
-    text-transform:uppercase;
-    margin-bottom:6px;
-  }
-  .kpi-value {
-    font-family:'Orbitron',sans-serif;
-    font-size:28px;
-    font-weight:700;
-    line-height:1;
-    color:var(--kpi-color, var(--accent));
-    text-shadow:0 0 15px var(--kpi-color, var(--accent));
-  }
-  .kpi-value.small { font-size:20px; }
-  .kpi-sub {
-    font-size:12px;
-    color:var(--text-secondary);
-    margin-top:4px;
-    letter-spacing:1px;
-  }
-  .kpi-icon {
-    position:absolute;
-    right:14px; top:14px;
-    font-size:22px;
-    opacity:0.15;
-  }
-  .kpi-trend {
-    display:inline-block;
-    font-size:11px;
-    padding:2px 6px;
-    border-radius:2px;
-    margin-top:4px;
-    letter-spacing:1px;
-  }
-  .trend-up { background:rgba(0,255,159,0.15); color:var(--accent2); }
-  .trend-down { background:rgba(255,56,96,0.15); color:var(--danger); }
-  .trend-neutral { background:rgba(0,212,255,0.1); color:var(--accent); }
-
-  /* SECTION LABELS */
-  .section-label {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:14px;
-  }
-  .section-label span {
-    font-family:'Orbitron',sans-serif;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:4px;
-    color:var(--text-secondary);
-    text-transform:uppercase;
-  }
-  .section-label::before,
-  .section-label::after {
-    content:'';
-    flex:1;
-    height:1px;
-    background:linear-gradient(90deg,var(--border),transparent);
-  }
-  .section-label::before { background:linear-gradient(90deg,transparent,var(--border)); }
-
-  /* CHART GRID */
-  .charts-row {
-    display:grid;
-    gap:16px;
-  }
-  .charts-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-  .charts-row.cols-2 { grid-template-columns: 2fr 1fr; }
-  .charts-row.cols-21 { grid-template-columns: 1fr 2fr; }
-  .charts-row.cols-12 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-
-  .panel {
-    background:var(--bg-card);
-    border:1px solid var(--border);
-    border-radius:4px;
-    padding:20px;
-    position:relative;
-    overflow:hidden;
-  }
-  .panel::after {
-    content:'';
-    position:absolute;
-    top:0;right:0;
-    width:60px;height:60px;
-    background:radial-gradient(circle at top right,rgba(0,212,255,0.06),transparent);
-    pointer-events:none;
-  }
-  .panel-title {
-    font-family:'Orbitron',sans-serif;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:3px;
-    color:var(--text-secondary);
-    text-transform:uppercase;
-    margin-bottom:16px;
-    padding-bottom:10px;
-    border-bottom:1px solid var(--border);
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .panel-title .dot {
-    width:6px;height:6px;
-    border-radius:50%;
-    background:var(--panel-accent, var(--accent));
-    box-shadow:0 0 8px var(--panel-accent, var(--accent));
-    flex-shrink:0;
-  }
-
-  canvas { width:100% !important; }
-
-  /* VEHICLE TABLE */
-  .data-table {
-    width:100%;
-    border-collapse:collapse;
-    font-size:13px;
-  }
-  .data-table th {
-    font-family:'Share Tech Mono',monospace;
-    font-size:10px;
-    letter-spacing:2px;
-    color:var(--text-muted);
-    text-transform:uppercase;
-    padding:8px 12px;
-    text-align:left;
-    border-bottom:1px solid var(--border);
-    white-space:nowrap;
-  }
-  .data-table td {
-    padding:10px 12px;
-    border-bottom:1px solid rgba(13,58,92,0.5);
-    color:var(--text-primary);
-    vertical-align:middle;
-  }
-  .data-table tr:hover td { background:rgba(0,212,255,0.03); }
-  .data-table tr:last-child td { border-bottom:none; }
-
-  .vehicle-badge {
-    font-family:'Share Tech Mono',monospace;
-    font-size:11px;
-    background:rgba(0,212,255,0.08);
-    border:1px solid rgba(0,212,255,0.2);
-    padding:3px 8px;
-    border-radius:2px;
-    color:var(--accent);
-    white-space:nowrap;
-  }
-
-  .bar-inline {
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .bar-track {
-    flex:1;
-    height:4px;
-    background:rgba(255,255,255,0.05);
-    border-radius:2px;
-    overflow:hidden;
-  }
-  .bar-fill {
-    height:100%;
-    border-radius:2px;
-    transition:width 1s ease;
-  }
-  .bar-val {
-    font-family:'Share Tech Mono',monospace;
-    font-size:11px;
-    color:var(--text-secondary);
-    min-width:45px;
-    text-align:right;
-  }
-
-  /* GAUGE */
-  .gauge-wrap {
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:8px;
-  }
-  .gauge-svg { width:120px;height:70px; }
-
-  /* LOJAS TOP */
-  .loja-list { display:flex;flex-direction:column;gap:8px; }
-  .loja-item {
-    display:grid;
-    grid-template-columns: 30px 1fr auto;
-    gap:10px;
-    align-items:center;
-  }
-  .loja-rank {
-    font-family:'Share Tech Mono',monospace;
-    font-size:11px;
-    color:var(--text-muted);
-    text-align:center;
-  }
-  .loja-name {
-    font-size:13px;
-    color:var(--text-primary);
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .loja-count {
-    font-family:'Share Tech Mono',monospace;
-    font-size:12px;
-    color:var(--accent2);
-    text-align:right;
-    min-width:30px;
-  }
-
-  /* PROJECTION BOX */
-  .proj-grid {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-  }
-  .proj-item {
-    background:rgba(0,212,255,0.04);
-    border:1px solid rgba(0,212,255,0.15);
-    border-radius:4px;
-    padding:14px;
-    text-align:center;
-  }
-  .proj-label {
-    font-size:10px;
-    letter-spacing:2px;
-    color:var(--text-muted);
-    text-transform:uppercase;
-    margin-bottom:6px;
-  }
-  .proj-val {
-    font-family:'Orbitron',sans-serif;
-    font-size:18px;
-    font-weight:700;
-    color:var(--accent4);
-    text-shadow:0 0 12px rgba(255,215,0,0.5);
-  }
-  .proj-note {
-    font-size:10px;
-    color:var(--text-muted);
-    margin-top:4px;
-    letter-spacing:1px;
-  }
-
-  /* STATUS INDICATOR */
-  .status-row {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    padding:6px 0;
-    font-size:11px;
-    color:var(--text-muted);
-    letter-spacing:2px;
-  }
-  #last-update {
-    font-family:'Share Tech Mono',monospace;
-    font-size:10px;
-    color:var(--text-muted);
-    text-align:center;
-    padding:8px;
-  }
-
-  /* PROGRESS RING */
-  .ring-wrap {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    gap:6px;
-  }
-
-  /* MOTORISTA TABLE */
-  .mot-grid {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-  .mot-item {
-    background:rgba(255,255,255,0.02);
-    border:1px solid var(--border);
-    border-radius:3px;
-    padding:10px 12px;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-  }
-  .mot-name {
-    font-size:13px;
-    font-weight:600;
-    color:var(--text-primary);
-    letter-spacing:1px;
-  }
-  .mot-stat {
-    font-family:'Share Tech Mono',monospace;
-    font-size:11px;
-    color:var(--text-secondary);
-  }
-
-  /* FORECAST CHART AREA */
-  .forecast-note {
-    font-size:11px;
-    color:var(--text-muted);
-    letter-spacing:1px;
-    text-align:center;
-    margin-top:8px;
-  }
-
-  /* LOADING */
-  #loading {
-    position:fixed;
-    inset:0;
-    background:var(--bg-deep);
-    z-index:9998;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:20px;
-  }
-  .loader-text {
-    font-family:'Orbitron',sans-serif;
-    font-size:18px;
-    letter-spacing:6px;
-    color:var(--accent);
-    animation:fadeInOut 1.5s ease-in-out infinite;
-  }
-  @keyframes fadeInOut {
-    0%,100%{opacity:0.3} 50%{opacity:1}
-  }
-  .loader-bar {
-    width:300px;height:2px;
-    background:var(--border);
-    border-radius:1px;
-    overflow:hidden;
-  }
-  .loader-progress {
-    height:100%;
-    background:linear-gradient(90deg,transparent,var(--accent),transparent);
-    animation:scanBar 1.2s linear infinite;
-  }
-  @keyframes scanBar {
-    from{transform:translateX(-100%)} to{transform:translateX(400%)}
-  }
-
-  @media(max-width:900px){
-    .charts-row.cols-3,.charts-row.cols-2,.charts-row.cols-21,.charts-row.cols-12{
-      grid-template-columns:1fr;
-    }
-    .mot-grid{grid-template-columns:1fr;}
-    .proj-grid{grid-template-columns:1fr;}
-    header{padding:12px 16px;}
-    main{padding:12px;}
-  }
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(4,1fr);}.driver-grid{grid-template-columns:repeat(4,1fr);}.cols-2,.cols-3{grid-template-columns:1fr;}}
+@media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.driver-grid{grid-template-columns:repeat(2,1fr);}.day-kpis{grid-template-columns:repeat(3,1fr);}.cols-22{grid-template-columns:1fr;}.hdr-top{padding:8px 12px;}.proj-grid{grid-template-columns:1fr;}.mot-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 
 <div id="loading">
-  <div class="loader-text">CARREGANDO DADOS TL</div>
-  <div class="loader-bar"><div class="loader-progress"></div></div>
-  <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-muted);letter-spacing:3px;">
-    OPERAÇÃO TELE-RIO · INICIALIZANDO
-  </div>
+  <div class="loader-text">CARREGANDO · TELE-RIO TL</div>
+  <div class="loader-bar"><div class="loader-prog"></div></div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#3a6a85;letter-spacing:3px;margin-top:8px;">SINCRONIZANDO COM GOOGLE SHEETS...</div>
 </div>
 
 <header>
-  <!-- TOP BAR -->
   <div class="hdr-top">
-    <!-- LOGO -->
     <div class="logo-block">
-      <div class="logo-badge">
-        <div class="brand-main">TELE-RIO</div>
-        <div class="brand-sub">Transportes &amp; Locações</div>
-      </div>
-      <div class="logo-text">
-        <div class="fleet">Fleet<span>Control</span> Pro</div>
-        <div class="sys-sub">Sistema de Gestão de Frota</div>
-      </div>
+      <div class="logo-badge"><div class="bm">TELE-RIO</div><div class="bs">Transportes &amp; Locações</div></div>
+      <div class="logo-text"><div class="fleet">Fleet<span>Control</span> Pro</div><div class="sys-sub">Sistema de Gestão de Frota</div></div>
     </div>
-
-    <!-- CENTER: BOTÕES -->
     <div class="hdr-center">
-      <button class="btn-sync" onclick="handleSync()">
-        <span class="sync-icon">☁</span> SINCRONIZAR
-      </button>
-      <div class="badge-registros">
-        <span>📋</span>
-        <span class="reg-num" id="reg-count">634</span>
-        <span style="color:#3a6a85;font-size:11px">registros</span>
-        <span class="reg-sep">·</span>
-        <span class="reg-days" id="reg-days">130 dias</span>
-      </div>
-      <div class="badge-ao-vivo">
-        <div class="live-dot"></div>
-        AO VIVO
-      </div>
+      <button class="btn-sync" id="btn-sync" onclick="handleSync()"><span id="sync-icon">☁</span> <span id="sync-lbl">SINCRONIZAR</span></button>
+      <div class="badge-reg"><span>📋</span><span class="rn" id="reg-count">—</span><span style="color:#3a6a85;font-size:10px">registros TL</span><span style="color:#0d3a5c">·</span><span class="rd" id="reg-days">— dias</span></div>
+      <div id="sync-status" class="sync-status sync-loading" style="display:none">⏳ conectando...</div>
+      <div class="badge-live"><div class="live-dot"></div>AO VIVO</div>
     </div>
-
-    <!-- RELÓGIO -->
     <div class="hdr-right">
-      <div id="date-display">---</div>
+      <div id="date-display">—</div>
       <div id="clock-display">--:--:--</div>
     </div>
   </div>
-
-  <!-- SUB BAR -->
   <div class="hdr-sub">
     <div class="hdr-sub-left">
-      <span class="sub-label">📅 PERÍODO:</span>
-      <button class="nav-btn" onclick="shiftPeriod(-1)">◀</button>
-      <button class="nav-btn" onclick="shiftPeriod(1)">▶</button>
-      <select class="date-select" id="period-select" onchange="updateSubBar()">
-        <option value="jan">Jan/2026 — 167 viagens</option>
-        <option value="fev">Fev/2026 — 109 viagens</option>
-        <option value="mar">Mar/2026 — 106 viagens</option>
-        <option value="abr">Abr/2026 — 88 viagens</option>
-        <option value="mai" selected>Mai/2026 — 103 viagens</option>
-        <option value="all">Todos os meses — 634 viagens</option>
-      </select>
+      <span class="sub-label">📅 SELECIONAR DATA:</span>
+      <button class="nav-btn" onclick="navDate(-1)">◀</button>
+      <button class="nav-btn" onclick="navDate(1)">▶</button>
+      <select class="date-select" id="date-select" onchange="onDateChange()"><option value="">— sincronizando... —</option></select>
     </div>
-    <div class="hdr-sub-right" id="sub-bar-info">
-      Exibindo <span class="hl">634 registros</span> de Jan–Mai/2026
-      &nbsp;·&nbsp; <span class="hl-green">573 viagens com KM</span>
-      &nbsp;·&nbsp; <span class="hl-orange">61 sem KM/reserva</span>
-      &nbsp;·&nbsp; <span style="color:#a78bfa">atualização a cada 3 min</span>
-    </div>
+    <div class="hdr-sub-right" id="sub-info">Aguardando sincronização...</div>
   </div>
 </header>
 
 <main>
 
-  <!-- KPI STRIP -->
-  <div class="kpi-strip" id="kpi-strip">
-    <div class="kpi-card" style="--kpi-color:var(--accent)">
-      <div class="kpi-icon">🚛</div>
-      <div class="kpi-label">Total de Viagens</div>
-      <div class="kpi-value" id="kpi-total-trips">634</div>
-      <div class="kpi-sub">registros TL</div>
-      <div class="kpi-trend trend-up">↑ OP ATIVA</div>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--accent2)">
-      <div class="kpi-icon">📍</div>
-      <div class="kpi-label">KM Total Rodado</div>
-      <div class="kpi-value small" id="kpi-total-km">26.244</div>
-      <div class="kpi-sub">quilômetros</div>
-      <div class="kpi-trend trend-up">↑ 5 MESES</div>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--accent3)">
-      <div class="kpi-icon">🚗</div>
-      <div class="kpi-label">Frota Ativa</div>
-      <div class="kpi-value" id="kpi-frota">7</div>
-      <div class="kpi-sub">veículos TL</div>
-      <div class="kpi-trend trend-neutral">CONSTANTE</div>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--accent4)">
-      <div class="kpi-icon">👨‍✈️</div>
-      <div class="kpi-label">Motoristas</div>
-      <div class="kpi-value" id="kpi-motoristas">10</div>
-      <div class="kpi-sub">cadastrados</div>
-      <div class="kpi-trend trend-neutral">ESCALA ATIVA</div>
-    </div>
-    <div class="kpi-card" style="--kpi-color:#a78bfa">
-      <div class="kpi-icon">⏱️</div>
-      <div class="kpi-label">Jornada Média</div>
-      <div class="kpi-value small" id="kpi-jornada">9.4h</div>
-      <div class="kpi-sub">por motorista</div>
-      <div class="kpi-trend trend-neutral">DENTRO DO LIMITE</div>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--accent2)">
-      <div class="kpi-icon">🏪</div>
-      <div class="kpi-label">Lojas Atendidas</div>
-      <div class="kpi-value" id="kpi-lojas">45+</div>
-      <div class="kpi-sub">pontos de entrega</div>
-      <div class="kpi-trend trend-up">↑ COBERTURA</div>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--accent3)">
-      <div class="kpi-icon">📊</div>
-      <div class="kpi-label">Média KM/Viagem</div>
-      <div class="kpi-value small" id="kpi-media-km">45.8</div>
-      <div class="kpi-sub">km por viagem</div>
-      <div class="kpi-trend trend-neutral">ESTÁVEL</div>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--danger)">
-      <div class="kpi-icon">⚡</div>
-      <div class="kpi-label">Eficiência Frota</div>
-      <div class="kpi-value small" id="kpi-eficiencia">87%</div>
-      <div class="kpi-sub">viagens c/ km válido</div>
-      <div class="kpi-trend trend-up">↑ BOM</div>
-    </div>
-  </div>
+  <!-- VISÃO GERAL DO DIA -->
+  <div class="sec">📊 Visão Geral do Dia · <span id="day-label" style="color:#ffd700">—</span></div>
+  <div class="op-strip" id="op-strip"><div style="padding:16px;color:#3a6a85;font-size:12px;text-align:center;flex:1">Sincronize para ver os dados do dia.</div></div>
 
-  <!-- ROW: KM MENSAL + DISTRIBUIÇÃO POR VEÍCULO -->
-  <div class="section-label"><span>ANÁLISE MENSAL · QUILOMETRAGEM & VIAGENS</span></div>
-  <div class="charts-row cols-2">
-    <div class="panel" style="--panel-accent:var(--accent)">
-      <div class="panel-title"><span class="dot"></span>KM TOTAL POR MÊS · 2026</div>
-      <canvas id="chartKmMensal" height="180"></canvas>
-      <div class="forecast-note">★ Linha pontilhada = projeção tendência</div>
+  <!-- KPIs DO DIA -->
+  <div class="day-bar">
+    <div class="day-bar-top">
+      <div class="day-bar-title">⚡ INDICADORES DO DIA SELECIONADO</div>
+      <div class="day-info" id="day-info">—</div>
     </div>
-    <div class="panel" style="--panel-accent:var(--accent3)">
-      <div class="panel-title"><span class="dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>VIAGENS POR MÊS</div>
-      <canvas id="chartViagens" height="180"></canvas>
-    </div>
-  </div>
-
-  <!-- ROW: POR VEÍCULO + JORNADA -->
-  <div class="section-label"><span>PERFORMANCE POR VEÍCULO</span></div>
-  <div class="charts-row cols-2">
-    <div class="panel" style="--panel-accent:var(--accent2)">
-      <div class="panel-title"><span class="dot" style="background:var(--accent2);box-shadow:0 0 8px var(--accent2)"></span>KM ACUMULADO POR VEÍCULO</div>
-      <table class="data-table" id="vehicle-table">
-        <thead>
-          <tr>
-            <th>VEÍCULO</th>
-            <th>VIAGENS</th>
-            <th>KM TOTAL</th>
-            <th>KM MÉDIO</th>
-            <th>JORNADA MÉD.</th>
-            <th>PERFORMANCE</th>
-          </tr>
-        </thead>
-        <tbody id="vehicle-tbody"></tbody>
-      </table>
-    </div>
-    <div class="panel" style="--panel-accent:#a78bfa">
-      <div class="panel-title"><span class="dot" style="background:#a78bfa;box-shadow:0 0 8px #a78bfa"></span>DISTRIBUIÇÃO KM · FROTA</div>
-      <canvas id="chartPizza" height="220"></canvas>
-    </div>
-  </div>
-
-  <!-- ROW: DESTINOS + DIAS DA SEMANA + HORA SAÍDA -->
-  <div class="section-label"><span>ANÁLISE DE ROTAS & OPERAÇÃO</span></div>
-  <div class="charts-row cols-3">
-    <div class="panel" style="--panel-accent:var(--accent4)">
-      <div class="panel-title"><span class="dot" style="background:var(--accent4);box-shadow:0 0 8px var(--accent4)"></span>TOP 12 LOJAS ATENDIDAS</div>
-      <div class="loja-list" id="loja-list"></div>
-    </div>
-    <div class="panel" style="--panel-accent:var(--accent3)">
-      <div class="panel-title"><span class="dot" style="background:var(--accent3);box-shadow:0 0 8px var(--accent3)"></span>VIAGENS POR DIA DA SEMANA</div>
-      <canvas id="chartDias" height="220"></canvas>
-    </div>
-    <div class="panel" style="--panel-accent:var(--accent)">
-      <div class="panel-title"><span class="dot"></span>DISTRIBUIÇÃO HORA DE SAÍDA</div>
-      <canvas id="chartHoras" height="220"></canvas>
-    </div>
-  </div>
-
-  <!-- ROW: PROJEÇÕES + MOTORISTAS -->
-  <div class="section-label"><span>PROJEÇÕES & PREVISÕES ANUAIS</span></div>
-  <div class="charts-row cols-2">
-    <div class="panel" style="--panel-accent:var(--accent4)">
-      <div class="panel-title"><span class="dot" style="background:var(--accent4);box-shadow:0 0 8px var(--accent4)"></span>PROJEÇÃO ANUAL · BASE 5 MESES</div>
-      <div class="proj-grid">
-        <div class="proj-item">
-          <div class="proj-label">KM Projetado/Ano</div>
-          <div class="proj-val">62.985</div>
-          <div class="proj-note">× 12/5 da base atual</div>
-        </div>
-        <div class="proj-item">
-          <div class="proj-label">Viagens/Ano</div>
-          <div class="proj-val">1.375</div>
-          <div class="proj-note">projeção de 573 viagens</div>
-        </div>
-        <div class="proj-item">
-          <div class="proj-label">Média KM/Mês</div>
-          <div class="proj-val">5.248</div>
-          <div class="proj-note">média dos 5 meses</div>
-        </div>
-        <div class="proj-item">
-          <div class="proj-label">Jornadas/Ano</div>
-          <div class="proj-val">~5.316</div>
-          <div class="proj-note">horas totais motoristas</div>
-        </div>
-        <div class="proj-item">
-          <div class="proj-label">Viagens/Mês (Média)</div>
-          <div class="proj-val">114</div>
-          <div class="proj-note">média mensal TL</div>
-        </div>
-        <div class="proj-item">
-          <div class="proj-label">KM/Veículo/Ano</div>
-          <div class="proj-val">~8.997</div>
-          <div class="proj-note">média frota 7 veículos</div>
-        </div>
+    <div class="day-kpis">
+      <div class="day-kpi">
+        <div class="day-kpi-val" id="dk-veic" style="color:#00d4ff">—</div>
+        <div class="day-kpi-lbl">Veículos</div>
+        <div class="day-kpi-sub" style="color:#7ab3cc">no dia</div>
       </div>
-      <canvas id="chartProjecao" height="140" style="margin-top:16px"></canvas>
-      <div class="forecast-note">▲ Projeção baseada em regressão linear dos 5 meses</div>
-    </div>
-    <div class="panel" style="--panel-accent:var(--accent2)">
-      <div class="panel-title"><span class="dot" style="background:var(--accent2);box-shadow:0 0 8px var(--accent2)"></span>MOTORISTAS ATIVOS · TL</div>
-      <div class="mot-grid" id="mot-grid"></div>
+      <div class="day-kpi">
+        <div class="day-kpi-val" id="dk-transito" style="color:#00d4ff">—</div>
+        <div class="day-kpi-lbl">Em Trânsito</div>
+        <div class="day-kpi-sub" id="dk-transito-sub" style="color:#00d4ff">saída já ocorreu</div>
+      </div>
+      <div class="day-kpi">
+        <div class="day-kpi-val" id="dk-prog" style="color:#ffd700">—</div>
+        <div class="day-kpi-lbl">Programadas</div>
+        <div class="day-kpi-sub" style="color:#ffd700">aguardando saída</div>
+      </div>
+      <div class="day-kpi">
+        <div class="day-kpi-val" id="dk-mot" style="color:#00ff9f">—</div>
+        <div class="day-kpi-lbl">Motoristas</div>
+        <div class="day-kpi-sub" style="color:#7ab3cc">ativos no dia</div>
+      </div>
+      <div class="day-kpi">
+        <div class="day-kpi-val" id="dk-rotas" style="color:#ffd700">—</div>
+        <div class="day-kpi-lbl">Rotas</div>
+        <div class="day-kpi-sub" id="dk-dia" style="color:#7ab3cc">—</div>
+      </div>
     </div>
   </div>
 
-  <!-- ROW: TENDÊNCIA SEMANAL + EFICIÊNCIA -->
-  <div class="section-label"><span>ANÁLISE DE TENDÊNCIA & EFICIÊNCIA</span></div>
+  <!-- MOTORISTAS DO DIA -->
+  <div class="sec">👨‍✈️ MOTORISTAS · DIA SELECIONADO</div>
+  <div class="driver-grid" id="driver-grid">
+    <div style="grid-column:span 6;text-align:center;padding:30px;color:#3a6a85;font-size:12px">Selecione uma data após sincronizar.</div>
+  </div>
+
+  <!-- TABELA DE ROTAS DO DIA -->
+  <div class="sec">📋 ROTAS DO DIA · TEMPO REAL</div>
+  <div class="tbl-wrap">
+    <table class="fleet-table">
+      <thead><tr>
+        <th>OP</th><th>Veículo</th><th>Motorista</th><th>Ponto ON</th><th>Prev. Refeição</th><th>Ponto OFF</th><th>Destino / Rota</th><th>Saída Veíc.</th><th>KM Percorrido</th><th>Status</th>
+      </tr></thead>
+      <tbody id="route-tbody"><tr><td colspan="10"><div class="no-data-day"><div class="ni">📅</div><p>Selecione uma data para ver as rotas.</p></div></td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- KPIs GERAIS (HISTÓRICO) -->
+  <div class="sec">📈 ANÁLISE HISTÓRICA · TODA A BASE TL</div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kc:#00d4ff"><div class="kpi-icon">🚛</div><div class="kpi-val" id="kpi-total-trips">—</div><div class="kpi-lbl">Total Viagens</div><div class="kpi-sub">todos os registros TL</div></div>
+    <div class="kpi-card" style="--kc:#00ff9f"><div class="kpi-icon">📍</div><div class="kpi-val" id="kpi-total-km" style="font-size:18px">—</div><div class="kpi-lbl">KM Total Rodado</div><div class="kpi-sub">quilômetros</div></div>
+    <div class="kpi-card" style="--kc:#ff6b35"><div class="kpi-icon">🚗</div><div class="kpi-val" id="kpi-frota">—</div><div class="kpi-lbl">Frota Ativa</div><div class="kpi-sub">veículos TL</div></div>
+    <div class="kpi-card" style="--kc:#ffd700"><div class="kpi-icon">👨‍✈️</div><div class="kpi-val" id="kpi-motoristas">—</div><div class="kpi-lbl">Motoristas</div><div class="kpi-sub">cadastrados</div></div>
+    <div class="kpi-card" style="--kc:#a78bfa"><div class="kpi-icon">⏱️</div><div class="kpi-val" id="kpi-jornada" style="font-size:18px">—</div><div class="kpi-lbl">Jornada Média</div><div class="kpi-sub">por motorista</div></div>
+    <div class="kpi-card" style="--kc:#00ff9f"><div class="kpi-icon">📊</div><div class="kpi-val" id="kpi-media-km" style="font-size:18px">—</div><div class="kpi-lbl">Média KM/Viagem</div><div class="kpi-sub">km por viagem</div></div>
+    <div class="kpi-card" style="--kc:#ff3860"><div class="kpi-icon">⚡</div><div class="kpi-val" id="kpi-eficiencia" style="font-size:18px">—</div><div class="kpi-lbl">Eficiência Frota</div><div class="kpi-sub">viagens com KM</div></div>
+  </div>
+
+  <!-- GRÁFICOS -->
+  <div class="sec">📊 KM MENSAL & VIAGENS</div>
   <div class="charts-row cols-2">
-    <div class="panel" style="--panel-accent:var(--accent)">
-      <div class="panel-title"><span class="dot"></span>EVOLUÇÃO MENSAL · KM vs VIAGENS (ÍNDICE)</div>
-      <canvas id="chartTendencia" height="180"></canvas>
-    </div>
-    <div class="panel" style="--panel-accent:var(--danger)">
-      <div class="panel-title"><span class="dot" style="background:var(--danger);box-shadow:0 0 8px var(--danger)"></span>EFICIÊNCIA POR VEÍCULO · KM MÉDIO/VIAGEM</div>
-      <canvas id="chartEficiencia" height="180"></canvas>
-    </div>
+    <div class="panel" style="--pa:#00d4ff"><div class="panel-title"><span class="dot"></span>KM TOTAL POR MÊS · 2026</div><canvas id="chartKmMensal" height="180"></canvas><div class="forecast-note">★ Linha pontilhada = projeção tendência</div></div>
+    <div class="panel" style="--pa:#ff6b35"><div class="panel-title"><span class="dot" style="background:#ff6b35;box-shadow:0 0 8px #ff6b35"></span>VIAGENS POR MÊS</div><canvas id="chartViagens" height="180"></canvas></div>
   </div>
 
-  <div id="last-update">⟳ ÚLTIMA ATUALIZAÇÃO: <span id="update-time">--</span> &nbsp;|&nbsp; PRÓXIMA EM: <span id="next-update">3:00</span> &nbsp;|&nbsp; FONTE: CONTROLE_PROGRAMAÇÃO_2025-2026.CSV</div>
+  <div class="sec">🚗 PERFORMANCE POR VEÍCULO</div>
+  <div class="charts-row cols-22">
+    <div class="panel" style="--pa:#00ff9f"><div class="panel-title"><span class="dot" style="background:#00ff9f;box-shadow:0 0 8px #00ff9f"></span>KM ACUMULADO POR VEÍCULO</div><table class="data-table"><thead><tr><th>Veículo</th><th>Viagens</th><th>KM Total</th><th>KM Médio</th><th>Jornada</th><th>Performance</th></tr></thead><tbody id="vehicle-tbody"></tbody></table></div>
+    <div class="panel" style="--pa:#a78bfa"><div class="panel-title"><span class="dot" style="background:#a78bfa;box-shadow:0 0 8px #a78bfa"></span>DISTRIBUIÇÃO KM · FROTA</div><canvas id="chartPizza" height="220"></canvas></div>
+  </div>
 
+  <div class="sec">🗺️ ROTAS & OPERAÇÃO</div>
+  <div class="charts-row cols-3">
+    <div class="panel" style="--pa:#ffd700"><div class="panel-title"><span class="dot" style="background:#ffd700;box-shadow:0 0 8px #ffd700"></span>TOP 12 LOJAS ATENDIDAS</div><div class="loja-list" id="loja-list"></div></div>
+    <div class="panel" style="--pa:#ff6b35"><div class="panel-title"><span class="dot" style="background:#ff6b35;box-shadow:0 0 8px #ff6b35"></span>VIAGENS POR DIA DA SEMANA</div><canvas id="chartDias" height="220"></canvas></div>
+    <div class="panel" style="--pa:#a78bfa"><div class="panel-title"><span class="dot" style="background:#a78bfa;box-shadow:0 0 8px #a78bfa"></span>HORA DE SAÍDA DO VEÍCULO</div><canvas id="chartHoras" height="220"></canvas></div>
+  </div>
+
+  <div class="sec">🔮 PROJEÇÕES & PREVISÕES ANUAIS</div>
+  <div class="charts-row cols-22">
+    <div class="panel" style="--pa:#ffd700">
+      <div class="panel-title"><span class="dot" style="background:#ffd700;box-shadow:0 0 8px #ffd700"></span>PROJEÇÃO ANUAL · BASE HISTÓRICA</div>
+      <div class="proj-grid" id="proj-grid"></div>
+      <canvas id="chartProjecao" height="130"></canvas>
+      <div class="forecast-note">▲ Projeção baseada em regressão linear da base histórica</div>
+    </div>
+    <div class="panel" style="--pa:#00ff9f"><div class="panel-title"><span class="dot" style="background:#00ff9f;box-shadow:0 0 8px #00ff9f"></span>MOTORISTAS ATIVOS · TL</div><div class="mot-grid" id="mot-grid"></div></div>
+  </div>
+
+  <div class="sec">📉 TENDÊNCIA & EFICIÊNCIA</div>
+  <div class="charts-row cols-22">
+    <div class="panel" style="--pa:#00d4ff"><div class="panel-title"><span class="dot"></span>EVOLUÇÃO MENSAL · KM vs VIAGENS (ÍNDICE BASE 100)</div><canvas id="chartTendencia" height="180"></canvas></div>
+    <div class="panel" style="--pa:#ff3860"><div class="panel-title"><span class="dot" style="background:#ff3860;box-shadow:0 0 8px #ff3860"></span>EFICIÊNCIA · KM MÉDIO/VIAGEM POR VEÍCULO</div><canvas id="chartEficiencia" height="180"></canvas></div>
+  </div>
+
+  <div id="status-bar">⟳ ÚLTIMA SINCRONIZAÇÃO: <span id="update-time">—</span> &nbsp;|&nbsp; PRÓXIMA EM: <span id="next-update">3:00</span> &nbsp;|&nbsp; FONTE: GOOGLE SHEETS · OPERAÇÃO TL TELE-RIO</div>
 </main>
+
+<div class="toast" id="toast"></div>
 
 <script>
 // ══════════════════════════════════════════════════════════════
-//  TELE-RIO · DASHBOARD TL — ENGINE DE SINCRONIZAÇÃO AO VIVO
-//  Fonte: Google Sheets publicado como CSV
+//  CONSTANTES
 // ══════════════════════════════════════════════════════════════
+const CSV_URL  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd77MkT5hd6gzTkMfzX2BVWY5Hqqfo3NluQY58mnOklN8--hPVIoe2CfzkbttnucJKbnJFiaPEWSmR/pub?gid=1559964021&single=true&output=csv';
+const RKEY     = 'tl_all_routes_v1';
+const DKEY     = 'tl_last_date';
+const LSYNC    = 'tl_last_sync';
+const INTERVAL = 3 * 60 * 1000;
+const PALETTE  = ['#00d4ff','#00ff9f','#a78bfa','#ff6b35','#ffd700','#ff3860','#45b7d1','#f472b6','#34d399','#fb923c'];
+const DIAS_PT  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DIAS_FULL= ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_FULL=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd77MkT5hd6gzTkMfzX2BVWY5Hqqfo3NluQY58mnOklN8--hPVIoe2CfzkbttnucJKbnJFiaPEWSmR/pub?gid=1559964021&single=true&output=csv';
-const REFRESH_INTERVAL = 3 * 60 * 1000; // 3 minutos
+// ══════════════════════════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════════════════════════
+let allRoutes = [], dateMap = {}, availDates = [], currentDate = '';
+let charts = {}, secondsLeft = 180;
 
-// Instâncias dos gráficos (para destruir e recriar no refresh)
-let charts = {};
-let secondsLeft = 180;
-let DATA = null;
-
-// ── PALETA ──────────────────────────────────────────────────
-const COLORS = {
-  accent : 'rgba(0,212,255,1)',
-  green  : 'rgba(0,255,159,1)',
-  orange : 'rgba(255,107,53,1)',
-  gold   : 'rgba(255,215,0,1)',
-  purple : 'rgba(167,139,250,1)',
-  danger : 'rgba(255,56,96,1)',
-  palette: ['#00d4ff','#00ff9f','#a78bfa','#ff6b35','#ffd700','#ff3860','#45b7d1','#f472b6','#34d399','#fb923c'],
-};
-
-function makeGradient(ctx, c1, c2){
-  const g = ctx.createLinearGradient(0,0,0,ctx.canvas.height);
-  g.addColorStop(0,c1); g.addColorStop(1,c2); return g;
-}
-
-// ── RELÓGIO ──────────────────────────────────────────────────
-const wdPT = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
-const moPT = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-function updateClock(){
+// ══════════════════════════════════════════════════════════════
+//  RELÓGIO
+// ══════════════════════════════════════════════════════════════
+function tick(){
   const n = new Date();
   document.getElementById('clock-display').textContent = n.toLocaleTimeString('pt-BR');
-  const wd = wdPT[n.getDay()];
+  const wd = DIAS_FULL[n.getDay()];
   document.getElementById('date-display').textContent =
-    `${wd[0].toUpperCase()+wd.slice(1)}, ${n.getDate()} de ${moPT[n.getMonth()]} de ${n.getFullYear()}`;
+    `${wd.charAt(0).toUpperCase()+wd.slice(1)}, ${n.getDate()} de ${MESES_FULL[n.getMonth()]} de ${n.getFullYear()}`;
 }
-setInterval(updateClock, 1000);
-updateClock();
+setInterval(tick, 1000); tick();
 
-// ── COUNTDOWN ────────────────────────────────────────────────
-function updateCountdown(){
+// ══════════════════════════════════════════════════════════════
+//  COUNTDOWN
+// ══════════════════════════════════════════════════════════════
+function tickCountdown(){
   secondsLeft--;
-  if(secondsLeft <= 0){ secondsLeft = 180; fetchAndRender(); }
-  const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+  if(secondsLeft <= 0){ secondsLeft = 180; syncSheets(); }
+  const m = Math.floor(secondsLeft/60), s = secondsLeft % 60;
   const el = document.getElementById('next-update');
   if(el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
 }
-setInterval(updateCountdown, 1000);
-
-// ── BOTÃO SINCRONIZAR ────────────────────────────────────────
-function handleSync(){
-  fetchAndRender(); // fetchAndRender já cuida do estado do botão
-}
-
-// ── PERÍODO SELECTOR ─────────────────────────────────────────
-const periodOrder = [];
-function buildPeriodSelector(months){
-  const sel = document.getElementById('period-select');
-  sel.innerHTML = '';
-  periodOrder.length = 0;
-  months.forEach(m=>{
-    const opt = document.createElement('option');
-    opt.value = m.key;
-    opt.textContent = `${m.label} — ${m.trips} viagens`;
-    sel.appendChild(opt);
-    periodOrder.push(m.key);
-  });
-  // Opção "Todos"
-  const all = document.createElement('option');
-  all.value = 'all'; all.textContent = `Todos os meses — ${DATA.totalTrips} viagens`;
-  sel.appendChild(all); periodOrder.push('all');
-  sel.value = 'all';
-  updateSubBar();
-}
-
-function updateSubBar(){
-  if(!DATA) return;
-  const sel = document.getElementById('period-select').value;
-  let regs, validas, sem, lbl;
-  if(sel === 'all'){
-    regs = DATA.totalTrips; validas = DATA.validKmTrips;
-    sem = regs - validas; lbl = 'todos os períodos';
-  } else {
-    const m = DATA.byMonth[sel] || {};
-    regs = m.trips||0; validas = m.validKm||0;
-    sem = regs - validas; lbl = m.label||sel;
-  }
-  document.getElementById('sub-bar-info').innerHTML =
-    `Exibindo <span class="hl">${regs.toLocaleString('pt-BR')} registros</span> de ${lbl}
-     &nbsp;·&nbsp; <span class="hl-green">${validas} viagens com KM</span>
-     &nbsp;·&nbsp; <span class="hl-orange">${sem} sem KM/reserva</span>
-     &nbsp;·&nbsp; <span style="color:#a78bfa">auto-sincronização a cada 3 min</span>`;
-  document.getElementById('reg-count').textContent = regs.toLocaleString('pt-BR');
-  document.getElementById('reg-days').textContent = DATA.diasNaBase + ' dias';
-}
-
-function shiftPeriod(dir){
-  const sel = document.getElementById('period-select');
-  const idx = periodOrder.indexOf(sel.value);
-  sel.value = periodOrder[Math.max(0, Math.min(periodOrder.length-1, idx+dir))];
-  updateSubBar();
-}
+setInterval(tickCountdown, 1000);
+// Atualiza status ao vivo a cada minuto (trânsito/programada muda com o tempo)
+setInterval(() => { if(currentDate) setDate(currentDate); }, 60000);
 
 // ══════════════════════════════════════════════════════════════
-//  PARSE CSV INLINE (sem dependência PapaParse) — padrão FleetControl Pro
+//  HELPERS DE TEMPO
+// ══════════════════════════════════════════════════════════════
+function timeToMin(s){
+  if(!s||!s.trim()) return null;
+  const p = s.trim().split(':');
+  if(p.length < 2) return null;
+  const h = parseInt(p[0]), m = parseInt(p[1]);
+  return isNaN(h)||isNaN(m) ? null : h*60+m;
+}
+function nowMin(){ const n = new Date(); return n.getHours()*60+n.getMinutes(); }
+function isHoje(dateStr){
+  if(!dateStr) return false;
+  const p = dateStr.split('/'); if(p.length < 3) return false;
+  const ano = p[2].length===4 ? parseInt(p[2]) : 2000+parseInt(p[2]);
+  const d = new Date(ano, parseInt(p[1])-1, parseInt(p[0]));
+  const n = new Date();
+  return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
+}
+function parseDateStr(d){
+  const p=d.split('/');
+  return new Date((p[2].length===4?parseInt(p[2]):2000+parseInt(p[2])),parseInt(p[1])-1,parseInt(p[0]));
+}
+function todayMidnight(){ const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
+
+// ══════════════════════════════════════════════════════════════
+//  STATUS DAS ROTAS (IGUAL AO FLEETCONTROL PRO)
+// ══════════════════════════════════════════════════════════════
+function getStatus(r, dateStr){
+  const kmFechado = (r.kmChegada||0) > 0;
+  if(kmFechado) return 'finalizada';
+  if(!r.destino || !r.destino.trim()) return 'sem_destino';
+  if(!r.saida_v || !r.saida_v.trim()) return 'sem_destino';
+  if(isHoje(dateStr)){
+    const svMin = timeToMin(r.saida_v);
+    if(svMin !== null && nowMin() < svMin) return 'programada';
+  }
+  return 'transito';
+}
+const isEmTransito  = (r,d) => getStatus(r,d||currentDate) === 'transito';
+const isProgramada  = (r,d) => getStatus(r,d||currentDate) === 'programada';
+const isFinalizada  = (r,d) => getStatus(r,d||currentDate) === 'finalizada';
+
+// ══════════════════════════════════════════════════════════════
+//  PARSE CSV — IDÊNTICO AO FLEETCONTROL PRO
 // ══════════════════════════════════════════════════════════════
 function splitLine(line, sep){
-  if(sep !== ',') return line.split(sep).map(c => c.trim().replace(/^"+|"+$/g,''));
-  const cols = []; let cur = '', inQ = false;
-  for(let c of line){
-    if(c === '"'){ inQ = !inQ; }
-    else if(c === sep && !inQ){ cols.push(cur.trim()); cur = ''; }
-    else { cur += c; }
+  if(sep !== ',') return line.split(sep).map(c=>c.trim().replace(/^"+|"+$/g,''));
+  const cols=[]; let cur='', inQ=false;
+  for(const c of line){
+    if(c==='"'){ inQ=!inQ; }
+    else if(c===sep&&!inQ){ cols.push(cur.trim()); cur=''; }
+    else{ cur+=c; }
   }
-  cols.push(cur.trim());
-  return cols;
+  cols.push(cur.trim()); return cols;
 }
 
-function parseCSV(csvText){
-  const lines = csvText.split(/\r?\n/).filter(l => l.trim());
-  if(!lines.length) return _emptyData();
-
-  // Detectar separador
+function parseCSV(raw){
+  const lines = raw.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length) return [];
   const sep = lines[0].includes('\t') ? '\t' : (lines[0].split(';').length > lines[0].split(',').length ? ';' : ',');
-
-  // Encontrar linha de cabeçalho
   let headerIdx = 0;
-  for(let i = 0; i < Math.min(5, lines.length); i++){
+  for(let i=0; i<Math.min(5,lines.length); i++){
     const u = lines[i].toUpperCase();
-    if(u.includes('DATA') && u.includes('OP') && (u.includes('MOTORISTA') || u.includes('VEICULO'))){ headerIdx = i; break; }
+    if(u.includes('DATA')&&u.includes('OP')&&(u.includes('MOTORISTA')||u.includes('VEICULO'))){ headerIdx=i; break; }
   }
-
-  const rawHeaders = splitLine(lines[headerIdx], sep);
-  const headers = rawHeaders.map(h => h.trim().toUpperCase().replace(/[^A-Z0-9]/g,'_'));
-
-  // Localizadores de coluna — tolerante a acentos e variações
-  const ci = (...names) => {
-    for(const n of names){
-      const idx = headers.findIndex(h => h.includes(n));
-      if(idx >= 0) return idx;
-    }
-    return -1;
-  };
+  const headers = splitLine(lines[headerIdx], sep).map(h=>h.trim().toUpperCase().replace(/[^A-Z0-9_]/g,'_'));
+  const ci = (...names) => { for(const n of names){ const idx=headers.findIndex(h=>h.includes(n)); if(idx>=0)return idx; } return -1; };
 
   const iData  = ci('DATA');
   const iOp    = ci('OP');
   const iVeic  = ci('VEICULO');
   const iMot   = ci('MOTORISTA');
-  const iDest  = ci('DESTINO');
-  const iSaidaV= ci('SA_DA_VE_CULO_CD','SAIDA_VEICULO_CD','SAIDA_VE_CULO','SA_DA_VEICULO');
-  const iKmP   = ci('KM_PERCORRIDO','KM_CHEGADA');
+  const iSaida = ci('PONTO_ON_MOT','PONTO_ON');
+  const iPrev  = ci('PREVIS');
+  const iOff   = ci('PONTO_OFF_MOTO','PONTO_OFF');
+  const iDest  = 9; // coluna DESTINO é a 10ª (índice 9) na planilha
+  const iSaidaV= ci('SA_DA_VE_CULO_CD','SAIDA_VEICULO_CD','SA_DA_VEICULO');
   const iKmS   = ci('KM_SAIDA');
+  const iKmC   = ci('KM_CHEGADA');
+  const iKmP   = ci('KM_PERCORRIDO');
   const iJorn  = ci('HORA_TOTAL_MOTORISTA','HORA_TOTAL');
 
-  // Parsear todas as linhas filtrando só OP=TL
-  const rawRows = [];
-  for(let i = headerIdx + 1; i < lines.length; i++){
+  const result = [];
+  for(let i=headerIdx+1; i<lines.length; i++){
     const cols = splitLine(lines[i], sep);
     if(cols.length < 4) continue;
-    const data = (cols[iData] || '').trim().replace(/"/g,'');
-    if(!data || !/\d{2}\/\d{2}\/\d{2,4}/.test(data)) continue;
-    const op = (cols[iOp] || '').trim().toUpperCase();
-    if(op !== 'TL') continue;
-    rawRows.push({
+    const data = (cols[iData]||'').trim().replace(/"/g,'');
+    if(!data||!/\d{2}\/\d{2}\/\d{2,4}/.test(data)) continue;
+    const op = (cols[iOp]||'').trim().toUpperCase();
+    if(op !== 'TL') continue; // FILTRO: só operação TL
+    const kmS  = parseInt((cols[iKmS]||'').replace(/[^\d]/g,''))||0;
+    const kmC  = parseInt((cols[iKmC]||'').replace(/[^\d]/g,''))||0;
+    const kmP  = parseInt((cols[iKmP]||'').replace(/[^\d]/g,''))||0;
+    const kmPercorrido = kmP > 0 ? kmP : (kmC > kmS ? kmC-kmS : 0);
+    result.push({
       data,
       op,
-      veiculo  : (cols[iVeic]  || '').trim(),
-      motorista: (cols[iMot]   || '').trim().toUpperCase(),
-      destino  : iDest  >= 0 ? (cols[iDest]  || '').trim().replace(/^"+|"+$/g,'') : '',
-      saida_v  : iSaidaV >= 0 ? (cols[iSaidaV]|| '').trim() : '',
-      kmPercorr: iKmP >= 0 ? parseInt((cols[iKmP]||'').replace(/\D/g,'')) || 0 : 0,
-      kmSaida  : iKmS >= 0 ? parseInt((cols[iKmS]||'').replace(/\D/g,'')) || 0 : 0,
-      jornRaw  : iJorn >= 0 ? (cols[iJorn] || '').trim() : '',
+      veiculo   : (cols[iVeic]  ||'').trim().toUpperCase(),
+      motorista : (cols[iMot]   ||'').trim().toUpperCase(),
+      saida     : iSaida>=0  ? (cols[iSaida] ||'').trim() : '',
+      prev      : iPrev>=0   ? (cols[iPrev]  ||'').trim() : '',
+      off       : iOff>=0    ? (cols[iOff]   ||'').trim() : '',
+      destino   : (cols[iDest]  ||'').trim().replace(/^"+|"+$/g,''),
+      saida_v   : iSaidaV>=0 ? (cols[iSaidaV]||'').trim() : '',
+      km        : kmPercorrido,
+      kmChegada : kmC,
+      jornRaw   : iJorn>=0   ? (cols[iJorn]  ||'').trim() : '',
     });
   }
+  return result;
+}
 
-  // helpers internos
-  const toMin = t => {
-    if(!t) return 0;
-    const p = (t+'').trim().split(':');
-    if(p.length < 2) return 0;
-    return parseInt(p[0]||0)*60 + parseInt(p[1]||0);
-  };
-  const parseDate = s => {
-    if(!s) return null;
-    const p = s.trim().split('/');
-    if(p.length !== 3) return null;
-    const [d,m,y] = p;
-    const fullY = y.length === 2 ? '20'+y : y;
-    return new Date(`${fullY}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
-  };
-  const monthKey   = dt => dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` : null;
-  const monthLabel = key => {
-    const [y,m] = key.split('-');
-    const names = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    return `${names[parseInt(m)-1]}/${y}`;
-  };
+// ══════════════════════════════════════════════════════════════
+//  CARREGAR ROTAS (padrão FleetControl Pro)
+// ══════════════════════════════════════════════════════════════
+function loadAllRoutes(parsed){
+  if(!parsed.length) return false;
+  allRoutes = parsed;
+  try{ localStorage.setItem(RKEY, JSON.stringify(allRoutes)); }catch(e){}
+  buildDateMap();
+  populateDateSelect();
+  // Cabeçalho
+  document.getElementById('reg-count').textContent = allRoutes.length.toLocaleString('pt-BR');
+  document.getElementById('reg-days').textContent  = availDates.length + ' dias';
+  // Analytics histórico
+  renderAnalytics();
+  // Seleciona data inteligente
+  const lastDate = localStorage.getItem(DKEY);
+  if(lastDate && availDates.includes(lastDate)) setDate(lastDate);
+  else selectSmartDate();
+  toast('✅ ' + allRoutes.length + ' registros TL · ' + availDates.length + ' dias');
+  return true;
+}
 
-  // Filtrar rows com OP já garantido = TL
-  const rows = rawRows;
+// ══════════════════════════════════════════════════════════════
+//  DATE MAP & SELETOR
+// ══════════════════════════════════════════════════════════════
+function buildDateMap(){
+  dateMap = {};
+  allRoutes.forEach(r=>{ if(!dateMap[r.data]) dateMap[r.data]=[]; dateMap[r.data].push(r); });
+  availDates = Object.keys(dateMap)
+    .filter(d=>/^\d{2}\/\d{2}\/\d{2,4}$/.test(d))
+    .sort((a,b)=>parseDateStr(a)-parseDateStr(b));
+}
 
-  // Acumuladores
-  const byMonth   = {};
-  const byVehicle = {};
-  const byDriver  = {};
-  const lojaCount = {};
-  const weekday   = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
-  const hourCount = {};
-  let totalKm = 0, validKmTrips = 0, jornMinSum = 0, jornCount = 0;
-  const dates = new Set();
-
-  rows.forEach(r => {
-    const dt    = parseDate(r.data);
-    const km    = r.kmPercorr > 0 ? r.kmPercorr : (r.kmSaida > 0 ? 0 : 0); // km percorrido direto
-    const kmFinal = r.kmPercorr; // já é km percorrido
-    const vei   = r.veiculo.trim();
-    const mot   = r.motorista.trim();
-    const dest  = r.destino.trim();
-    const saida = r.saida_v.trim();
-    const jorn  = toMin(r.jornRaw);
-
-    if(dt) dates.add(dt.toDateString());
-
-    // Por mês
-    const mk = monthKey(dt);
-    if(mk){
-      if(!byMonth[mk]) byMonth[mk] = { trips:0, km:0, validKm:0, label:monthLabel(mk), key:mk };
-      byMonth[mk].trips++;
-      byMonth[mk].km += kmFinal;
-      if(kmFinal > 0) byMonth[mk].validKm++;
-    }
-
-    // KM total
-    totalKm += kmFinal;
-    if(kmFinal > 0) validKmTrips++;
-
-    // Por veículo
-    if(vei){
-      if(!byVehicle[vei]) byVehicle[vei] = { id:vei, trips:0, km:0, jornMin:0, jornN:0 };
-      byVehicle[vei].trips++;
-      byVehicle[vei].km += kmFinal;
-      if(jorn > 0 && jorn < 900){ byVehicle[vei].jornMin += jorn; byVehicle[vei].jornN++; }
-    }
-
-    // Por motorista
-    if(mot){
-      if(!byDriver[mot]) byDriver[mot] = { nome:mot, viagens:0, km:0 };
-      byDriver[mot].viagens++;
-      byDriver[mot].km += kmFinal;
-    }
-
-    // Jornada global
-    if(jorn > 0 && jorn < 900){ jornMinSum += jorn; jornCount++; }
-
-    // Destino → loja
-    const m = dest.match(/^(\d+)\s*[-–]\s*([^(,\n]+)/);
-    if(m){ const k=`${m[1].padStart(2,'0')} - ${m[2].trim()}`; lojaCount[k]=(lojaCount[k]||0)+1; }
-
-    // Dia da semana
-    if(dt) weekday[dt.getDay()] = (weekday[dt.getDay()]||0) + 1;
-
-    // Hora de saída do veículo
-    if(saida){ const h=parseInt(saida.split(':')[0]); if(!isNaN(h)) hourCount[h]=(hourCount[h]||0)+1; }
+function populateDateSelect(){
+  const sel = document.getElementById('date-select');
+  sel.innerHTML = '';
+  if(!availDates.length){ sel.innerHTML='<option value="">— sem dados —</option>'; return; }
+  availDates.forEach(d=>{
+    const dt   = parseDateStr(d);
+    const rows = dateMap[d]||[];
+    const nT   = rows.filter(r=>isEmTransito(r,d)).length;
+    const nP   = rows.filter(r=>isProgramada(r,d)).length;
+    let extra  = '';
+    if(nT>0) extra+=` · 🚛${nT}`;
+    if(nP>0) extra+=` · 🕐${nP}`;
+    const opt  = document.createElement('option');
+    opt.value  = d;
+    opt.textContent = `${d} (${DIAS_PT[dt.getDay()]}) — ${rows.length} rota${rows.length!==1?'s':''}${extra}`;
+    sel.appendChild(opt);
   });
+}
 
-  // Ordenar meses
-  const sortedMonths = Object.values(byMonth).sort((a,b)=>a.key.localeCompare(b.key));
+function selectSmartDate(){
+  const hoje = todayMidnight();
+  const hojeFmt = String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+String(hoje.getFullYear()).slice(2);
+  if(availDates.includes(hojeFmt)){ setDate(hojeFmt); return; }
+  // Procura a mais próxima
+  const futura = availDates.find(d=>parseDateStr(d)>=hoje);
+  setDate(futura||availDates[availDates.length-1]);
+}
 
-  // Veículos ordenados por km desc
-  const vehicles = Object.values(byVehicle)
-    .sort((a,b)=>b.km-a.km)
-    .map(v=>({ ...v, jornada: v.jornN ? +(v.jornMin/v.jornN/60).toFixed(1) : 0 }));
+function onDateChange(){
+  const d = document.getElementById('date-select').value;
+  if(d) setDate(d);
+}
+function navDate(dir){
+  if(!availDates.length) return;
+  const idx = availDates.indexOf(currentDate);
+  const ni  = Math.max(0, Math.min(availDates.length-1, idx+dir));
+  setDate(availDates[ni]);
+}
+function setDate(d){
+  currentDate = d;
+  document.getElementById('date-select').value = d;
+  try{ localStorage.setItem(DKEY, d); }catch(e){}
+  const rows = dateMap[d]||[];
+  updateDayView(rows, d);
+}
 
-  // Motoristas ordenados
-  const motoristasData = Object.values(byDriver).sort((a,b)=>b.viagens-a.viagens);
+// ══════════════════════════════════════════════════════════════
+//  VISÃO DO DIA
+// ══════════════════════════════════════════════════════════════
+function updateDayView(rows, d){
+  const dt   = parseDateStr(d);
+  const nT   = rows.filter(r=>isEmTransito(r,d)).length;
+  const nP   = rows.filter(r=>isProgramada(r,d)).length;
+  const nF   = rows.filter(r=>isFinalizada(r,d)).length;
+  const veics= new Set(rows.map(r=>r.veiculo)).size;
+  const mots = new Set(rows.map(r=>r.motorista)).size;
+  const pctT = rows.length ? Math.round(nT/rows.length*100) : 0;
 
-  // Top lojas
-  const lojaTop = Object.entries(lojaCount)
-    .sort((a,b)=>b[1]-a[1]).slice(0,12)
-    .map(([k,v])=>({ nome:k, count:v }));
+  // Label do dia
+  document.getElementById('day-label').textContent = d ? `${d} · ${DIAS_FULL[dt.getDay()]}` : '—';
 
-  // Dias da semana (Seg=1,...,Sáb=6, Dom=0)
-  const wdLabels=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  const weekdays=['Seg','Ter','Qua','Qui','Sex','Sáb'];
-  const weekdayTrips=[weekday[1],weekday[2],weekday[3],weekday[4],weekday[5],weekday[6]];
+  // Day KPIs
+  const sv=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  sv('dk-veic',   rows.length ? veics : '—');
+  sv('dk-transito', rows.length ? nT   : '—');
+  sv('dk-prog',   rows.length ? nP   : '—');
+  sv('dk-mot',    rows.length ? mots : '—');
+  sv('dk-rotas',  rows.length || '—');
+  sv('dk-dia',    DIAS_FULL[dt.getDay()]||'—');
+  sv('dk-transito-sub', rows.length ? pctT+'% · saída ocorreu' : 'saída já ocorreu');
 
-  // Horas
-  const allHours = Array.from({length:19},(_,i)=>i+4); // 04h..22h
-  const hourTrips = allHours.map(h=>hourCount[h]||0);
-  const hoursLabels = allHours.map(h=>`${String(h).padStart(2,'0')}h`);
+  // Info sub-bar
+  document.getElementById('day-info').textContent =
+    rows.length
+    ? `${rows.length} rotas · ${nT} em trânsito · ${nP} programadas · ${nF} finalizadas`
+    : 'Nenhuma rota nesta data';
+  document.getElementById('sub-info').innerHTML =
+    rows.length
+    ? `Exibindo <span class="hl">${rows.length} rotas</span> de ${d} &nbsp;·&nbsp; <span class="hl-blue">${nT} em trânsito</span> &nbsp;·&nbsp; <span class="hl" style="color:#ffd700">${nP} programadas</span> &nbsp;·&nbsp; <span class="hl-green">${nF} finalizadas</span>`
+    : 'Nenhum dado para esta data.';
 
-  // Projeção linear
-  const mKm = sortedMonths.map(m=>m.km);
-  const n   = mKm.length;
-  let slope=0, intercept=0;
-  if(n>=2){
-    const sumX=n*(n-1)/2, sumY=mKm.reduce((a,b)=>a+b,0);
-    const sumXY=mKm.reduce((s,v,i)=>s+i*v,0);
-    const sumX2=mKm.reduce((s,_,i)=>s+i*i,0);
-    slope=(n*sumXY-sumX*sumY)/(n*sumX2-sumX*sumX);
-    intercept=(sumY-slope*sumX)/n;
+  // OP STRIP
+  renderOpStrip(rows, d);
+
+  // Drivers
+  renderDrivers(rows, d);
+
+  // Tabela
+  renderTable(rows, d);
+}
+
+// ── OP STRIP ──────────────────────────────────────────────────
+function renderOpStrip(rows, d){
+  const el = document.getElementById('op-strip');
+  const opCount={};
+  rows.forEach(r=>{ if(r.op) opCount[r.op]=(opCount[r.op]||0)+1; });
+  const ops = Object.keys(opCount);
+  if(!ops.length){ el.innerHTML='<div style="padding:16px;color:#3a6a85;font-size:12px;text-align:center;flex:1">Sem rotas nesta data.</div>'; return; }
+  const total = Object.values(opCount).reduce((a,b)=>a+b,0);
+  el.innerHTML = ops.map(op=>{
+    const n  = opCount[op];
+    const nT = rows.filter(r=>r.op===op&&isEmTransito(r,d)).length;
+    const nP = rows.filter(r=>r.op===op&&isProgramada(r,d)).length;
+    const nF = rows.filter(r=>r.op===op&&isFinalizada(r,d)).length;
+    const pctT = n ? Math.round(nT/n*100) : 0;
+    return `<div class="op-strip-item">
+      <div class="op-sig" style="color:#00d4ff">${op}</div>
+      <div class="op-num" style="color:#00d4ff">${n}</div>
+      <div class="op-lbl">na escala</div>
+      <div class="op-sub" style="color:#00d4ff">🚛 ${nT} trânsito</div>
+      ${nP>0?`<div class="op-sub" style="color:#ffd700">🕐 ${nP} prog.</div>`:''}
+      ${nF>0?`<div class="op-sub" style="color:#00ff9f">✅ ${nF} final.</div>`:''}
+      <div class="op-bar" style="background:rgba(0,212,255,.1)"><div style="height:100%;width:${pctT}%;background:#00d4ff;border-radius:2px;transition:width .6s"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── DRIVERS ───────────────────────────────────────────────────
+function renderDrivers(rows, d){
+  const grid = document.getElementById('driver-grid');
+  if(!rows.length){
+    grid.innerHTML='<div style="grid-column:span 6;text-align:center;padding:30px;color:#3a6a85;font-size:12px">Nenhuma rota para este dia.</div>';
+    return;
   }
-  const totalMonths = 12;
-  const projKm = Array.from({length:totalMonths},(_,i)=>
-    i < n ? null : Math.max(0, Math.round(intercept + slope*i))
-  );
+  const drT={}, drP={}, drF={};
+  rows.forEach(r=>{
+    const st = getStatus(r,d);
+    if(st==='transito')   drT[r.motorista]=true;
+    if(st==='programada') drP[r.motorista]=true;
+    if(st==='finalizada') drF[r.motorista]=true;
+  });
+  const drivers = [...new Set(rows.map(r=>r.motorista))].filter(Boolean).sort((a,b)=>{
+    const pa = drT[a]?4:drP[a]?3:drF[a]?2:1;
+    const pb = drT[b]?4:drP[b]?3:drF[b]?2:1;
+    return pb-pa;
+  });
+  grid.innerHTML = drivers.map(name=>{
+    const ini    = name.split(' ').map(w=>w[0]||'').join('').substring(0,2);
+    const nrotas = rows.filter(r=>r.motorista===name).length;
+    const placa  = rows.find(r=>r.motorista===name)?.veiculo||'—';
+    const emT=!!drT[name], prog=!emT&&!!drP[name], fin=!emT&&!prog&&!!drF[name];
+    const border = emT?'rgba(0,212,255,.7)':prog?'rgba(255,215,0,.6)':fin?'rgba(0,255,159,.5)':'#0d3a5c';
+    const dotCol = emT?'#00d4ff':prog?'#ffd700':fin?'#00ff9f':'#3a6a85';
+    let badge='';
+    if(emT) badge=`<div style="margin-top:3px"><span class="transito-badge"><span class="transito-dot"></span>trânsito</span></div>`;
+    else if(prog){ const sv=rows.find(r=>r.motorista===name&&isProgramada(r,d))?.saida_v||''; badge=`<div style="margin-top:3px"><span class="prog-badge">🕐 ${sv||'programada'}</span></div>`; }
+    else if(fin) badge=`<div style="margin-top:3px"><span class="fin-badge">✅ finalizado</span></div>`;
+    return `<div class="dr-card" style="border-color:${border}">
+      <div class="dr-av">${ini}</div>
+      <div class="dr-info">
+        <div class="dr-name">${name}</div>
+        <div class="dr-ops">${nrotas} rota${nrotas!==1?'s':''}</div>
+        <div class="dr-placa">🚛 ${placa}</div>
+        ${badge}
+      </div>
+      <div class="dr-dot" style="background:${dotCol}"></div>
+    </div>`;
+  }).join('');
+}
 
-  return {
-    totalTrips   : rows.length,
-    totalKm,
-    validKmTrips,
-    frota        : vehicles.length,
-    motoristas   : motoristasData.length,
-    avgJornada   : jornCount ? +(jornMinSum/jornCount/60).toFixed(1) : 0,
-    avgKmViagem  : validKmTrips ? +(totalKm/validKmTrips).toFixed(1) : 0,
-    eficiencia   : rows.length ? Math.round(validKmTrips/rows.length*100) : 0,
-    diasNaBase   : dates.size,
-    byMonth,
-    sortedMonths,
-    vehicles,
-    motoristasData,
-    lojaTop,
-    weekdays,
-    weekdayTrips,
-    hoursLabels,
-    hourTrips,
-    slope, intercept, n,
-    projKm,
-  };
+// ── TABELA DE ROTAS ───────────────────────────────────────────
+function renderTable(rows, d){
+  const tbody = document.getElementById('route-tbody');
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="10"><div class="no-data-day"><div class="ni">📅</div><p>Nenhuma rota para esta data.</p></div></td></tr>';
+    return;
+  }
+  const order = {transito:4,programada:3,finalizada:2,sem_destino:1};
+  const sorted = [...rows].sort((a,b)=>(order[getStatus(b,d)]||0)-(order[getStatus(a,d)]||0));
+  tbody.innerHTML = sorted.map(r=>{
+    const st  = getStatus(r,d);
+    const cls = st==='transito'?'tr-transito':st==='programada'?'tr-prog':st==='finalizada'?'tr-fin':'';
+    let stBadge;
+    if(st==='transito'){
+      stBadge=`<span class="transito-badge"><span class="transito-dot"></span>em trânsito</span>`;
+    } else if(st==='programada'){
+      const svMin=timeToMin(r.saida_v);
+      const falta=svMin!==null?svMin-nowMin():null;
+      const fStr=falta!==null&&falta>0?` · em ${falta}min`:'';
+      stBadge=`<span class="prog-badge">🕐 programada${fStr}</span>`;
+    } else if(st==='finalizada'){
+      stBadge=`<span class="fin-badge">✅ finalizado${r.km?' · '+r.km.toLocaleString('pt-BR')+' km':''}</span>`;
+    } else {
+      stBadge=`<span style="font-size:9px;color:#3a6a85">— sem destino —</span>`;
+    }
+    return `<tr class="${cls}">
+      <td><span class="op-tl">TL</span></td>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#00d4ff">${r.veiculo}</td>
+      <td><strong>${r.motorista}</strong></td>
+      <td style="color:#7ab3cc">${r.saida||'—'}</td>
+      <td style="color:#7ab3cc">${r.prev||'—'}</td>
+      <td style="color:#7ab3cc">${r.off||'—'}</td>
+      <td style="max-width:240px;white-space:normal;font-size:10px;color:#e8f4fd">${r.destino||'—'}</td>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#ffd700">${r.saida_v||'—'}</td>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#00ff9f">${r.km>0?r.km.toLocaleString('pt-BR')+' km':'—'}</td>
+      <td>${stBadge}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
-//  RENDER — KPIs
-// ══════════════════════════════════════════════════════════════
-function renderKPIs(){
-  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-  set('kpi-total-trips', DATA.totalTrips.toLocaleString('pt-BR'));
-  set('kpi-total-km',    DATA.totalKm.toLocaleString('pt-BR'));
-  set('kpi-frota',       DATA.frota);
-  set('kpi-motoristas',  DATA.motoristas);
-  set('kpi-jornada',     DATA.avgJornada+'h');
-  set('kpi-lojas',       DATA.lojaTop.length+'+');
-  set('kpi-media-km',    DATA.avgKmViagem);
-  set('kpi-eficiencia',  DATA.eficiencia+'%');
-}
-
-// ══════════════════════════════════════════════════════════════
-//  RENDER — GRÁFICOS
+//  ANALYTICS HISTÓRICO — GRÁFICOS & TABELAS
 // ══════════════════════════════════════════════════════════════
 Chart.defaults.color = '#7ab3cc';
 Chart.defaults.borderColor = 'rgba(13,58,92,0.6)';
 Chart.defaults.font.family = 'Rajdhani';
 
 function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+function mkGrad(ctx, c1, c2){ const g=ctx.createLinearGradient(0,0,0,ctx.canvas.height); g.addColorStop(0,c1); g.addColorStop(1,c2); return g; }
 
-// ── KM MENSAL + PROJEÇÃO ──────────────────────────────────────
-function renderChartKmMensal(){
-  destroyChart('chartKmMensal');
-  const ctx = document.getElementById('chartKmMensal').getContext('2d');
-  const grad = makeGradient(ctx,'rgba(0,212,255,0.4)','rgba(0,212,255,0)');
-  const allMonthNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const { sortedMonths, projKm } = DATA;
-  const n = sortedMonths.length;
+function renderAnalytics(){
+  // Calcular dados históricos a partir de allRoutes (só TL — já filtrado)
+  const byMonth={}, byVehicle={}, byDriver={}, lojaCount={};
+  const weekday={0:0,1:0,2:0,3:0,4:0,5:0,6:0}, hourCount={};
+  let totalKm=0, validKmTrips=0, jornSum=0, jornCount=0;
 
-  // Labels: usar os meses reais + projetar até Dez
-  const labels = allMonthNames.slice(0, Math.max(n, 12));
-  const realData = [...sortedMonths.map(m=>m.km), ...Array(Math.max(0,12-n)).fill(null)];
-  const projData = projKm; // já tem 12 posições, null nos meses reais
+  allRoutes.forEach(r=>{
+    // Mês
+    const p=r.data.split('/'); if(p.length!==3) return;
+    const ano=p[2].length===4?parseInt(p[2]):2000+parseInt(p[2]);
+    const mk=`${ano}-${p[1].padStart(2,'0')}`;
+    const mlbl=`${MESES_PT[parseInt(p[1])-1]}/${ano}`;
+    if(!byMonth[mk]) byMonth[mk]={key:mk,label:mlbl,trips:0,km:0,validKm:0};
+    byMonth[mk].trips++;
+    byMonth[mk].km += r.km;
+    if(r.km>0) byMonth[mk].validKm++;
 
-  charts['chartKmMensal'] = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels,
-      datasets:[
-        { label:'KM Real', data:realData, borderColor:COLORS.accent, backgroundColor:grad,
-          borderWidth:2.5, pointBackgroundColor:COLORS.accent, pointRadius:5, tension:0.3, fill:true },
-        { label:'Projeção', data:projData, borderColor:COLORS.gold, backgroundColor:'transparent',
-          borderWidth:2, borderDash:[6,4], pointBackgroundColor:COLORS.gold, pointRadius:4, tension:0.3 }
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{labels:{color:'#7ab3cc',font:{size:11}}},
-        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${(c.parsed.y||0).toLocaleString('pt-BR')} km`}}
-      },
-      scales:{
-        x:{grid:{color:'rgba(13,58,92,0.4)'},ticks:{color:'#7ab3cc'}},
-        y:{grid:{color:'rgba(13,58,92,0.4)'},ticks:{color:'#7ab3cc',callback:v=>v.toLocaleString('pt-BR')}}
-      }
+    // KM total
+    totalKm += r.km;
+    if(r.km>0) validKmTrips++;
+
+    // Veículo
+    const v=r.veiculo;
+    if(v){
+      if(!byVehicle[v]) byVehicle[v]={id:v,trips:0,km:0,jornMin:0,jornN:0};
+      byVehicle[v].trips++;
+      byVehicle[v].km+=r.km;
+      const jm=timeToMin(r.jornRaw);
+      if(jm&&jm>0&&jm<900){ byVehicle[v].jornMin+=jm; byVehicle[v].jornN++; jornSum+=jm; jornCount++; }
     }
-  });
-}
 
-// ── VIAGENS POR MÊS ───────────────────────────────────────────
-function renderChartViagens(){
-  destroyChart('chartViagens');
-  const ctx = document.getElementById('chartViagens').getContext('2d');
-  const labels = DATA.sortedMonths.map(m=>m.label.split('/')[0]);
-  const data   = DATA.sortedMonths.map(m=>m.trips);
-  charts['chartViagens'] = new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels,
-      datasets:[{ label:'Viagens', data,
-        backgroundColor:data.map((_,i)=>`rgba(255,107,53,${0.35+i*0.1})`),
-        borderColor:COLORS.orange, borderWidth:1, borderRadius:3 }]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:'#7ab3cc'}},
-        y:{grid:{color:'rgba(13,58,92,0.4)'},ticks:{color:'#7ab3cc'}}
-      }
-    }
-  });
-}
+    // Motorista
+    const m=r.motorista;
+    if(m){ if(!byDriver[m]) byDriver[m]={nome:m,viagens:0,km:0}; byDriver[m].viagens++; byDriver[m].km+=r.km; }
 
-// ── PIZZA KM POR VEÍCULO ──────────────────────────────────────
-function renderChartPizza(){
-  destroyChart('chartPizza');
-  const ctx = document.getElementById('chartPizza').getContext('2d');
-  const vv = DATA.vehicles.filter(v=>v.km>0);
-  charts['chartPizza'] = new Chart(ctx,{
-    type:'doughnut',
-    data:{
-      labels: vv.map(v=>v.id.split(' ').slice(0,2).join(' ')),
-      datasets:[{
-        data: vv.map(v=>v.km),
-        backgroundColor: COLORS.palette.slice(0,vv.length).map(c=>c+'CC'),
-        borderColor:     COLORS.palette.slice(0,vv.length),
-        borderWidth:2, hoverOffset:8
-      }]
-    },
-    options:{
-      responsive:true, cutout:'65%',
-      plugins:{
-        legend:{position:'bottom',labels:{color:'#7ab3cc',font:{size:10},boxWidth:10,padding:8}},
-        tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toLocaleString('pt-BR')} km (${Math.round(c.parsed/DATA.totalKm*100)}%)`}}
-      }
-    }
-  });
-}
+    // Loja
+    const lm=r.destino.match(/^(\d+)\s*[-–]\s*([^(,\n]+)/);
+    if(lm){ const k=`${lm[1].padStart(2,'0')} - ${lm[2].trim()}`; lojaCount[k]=(lojaCount[k]||0)+1; }
 
-// ── TABELA VEÍCULOS ───────────────────────────────────────────
-function renderVehicleTable(){
-  const tbody = document.getElementById('vehicle-tbody');
-  tbody.innerHTML = '';
-  const maxKm = Math.max(...DATA.vehicles.map(v=>v.km), 1);
-  DATA.vehicles.forEach((v,i)=>{
-    const pct  = Math.round(v.km/maxKm*100);
-    const avg  = v.km>0&&v.trips>0 ? (v.km/v.trips).toFixed(1) : '—';
-    const col  = COLORS.palette[i % COLORS.palette.length];
-    const row  = document.createElement('tr');
-    row.innerHTML = `
-      <td><span class="vehicle-badge">${v.id}</span></td>
+    // Dia da semana
+    const dt2=new Date(ano,parseInt(p[1])-1,parseInt(p[0]));
+    weekday[dt2.getDay()]=(weekday[dt2.getDay()]||0)+1;
+
+    // Hora saída
+    if(r.saida_v){ const h=parseInt(r.saida_v.split(':')[0]); if(!isNaN(h)) hourCount[h]=(hourCount[h]||0)+1; }
+  });
+
+  const sortedMonths = Object.values(byMonth).sort((a,b)=>a.key.localeCompare(b.key));
+  const vehicles     = Object.values(byVehicle).sort((a,b)=>b.km-a.km)
+    .map(v=>({...v,jornada:v.jornN?(v.jornMin/v.jornN/60).toFixed(1):'—'}));
+  const motoristasData = Object.values(byDriver).sort((a,b)=>b.viagens-a.viagens);
+  const lojaTop = Object.entries(lojaCount).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([k,v])=>({nome:k,count:v}));
+  const avgJornada = jornCount ? (jornSum/jornCount/60).toFixed(1) : '—';
+  const avgKmViagem= validKmTrips ? (totalKm/validKmTrips).toFixed(1) : '—';
+  const eficiencia = allRoutes.length ? Math.round(validKmTrips/allRoutes.length*100)+'%' : '—';
+
+  // KPIs históricos
+  const sv=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  sv('kpi-total-trips', allRoutes.length.toLocaleString('pt-BR'));
+  sv('kpi-total-km',    totalKm.toLocaleString('pt-BR'));
+  sv('kpi-frota',       vehicles.length);
+  sv('kpi-motoristas',  motoristasData.length);
+  sv('kpi-jornada',     avgJornada+'h');
+  sv('kpi-media-km',    avgKmViagem+' km');
+  sv('kpi-eficiencia',  eficiencia);
+
+  // Projeção
+  const n=sortedMonths.length;
+  let slope=0, intercept=0;
+  if(n>=2){
+    const mKm=sortedMonths.map(m=>m.km);
+    const sumX=n*(n-1)/2, sumY=mKm.reduce((a,b)=>a+b,0);
+    const sumXY=mKm.reduce((s,v,i)=>s+i*v,0);
+    const sumX2=mKm.reduce((s,_,i)=>s+i*i,0);
+    slope=(n*sumXY-sumX*sumY)/(n*sumX2-sumX*sumX);
+    intercept=(sumY-slope*sumX)/n;
+  }
+  const mediaKm = n ? Math.round(totalKm/n) : 0;
+  const mediaTrips = n ? Math.round(validKmTrips/n) : 0;
+  const projAnualKm = Math.round(mediaKm*12);
+  const projAnualTrips = Math.round(mediaTrips*12);
+  const kmPorVeiculo = vehicles.length ? Math.round(projAnualKm/vehicles.length) : 0;
+
+  const pg = document.getElementById('proj-grid');
+  if(pg) pg.innerHTML=`
+    <div class="proj-item"><div class="proj-label">KM Projetado/Ano</div><div class="proj-val">${projAnualKm.toLocaleString('pt-BR')}</div><div class="proj-note">base: ${n} meses × 12</div></div>
+    <div class="proj-item"><div class="proj-label">Viagens/Ano</div><div class="proj-val">${projAnualTrips.toLocaleString('pt-BR')}</div><div class="proj-note">de ${validKmTrips} viagens válidas</div></div>
+    <div class="proj-item"><div class="proj-label">Média KM/Mês</div><div class="proj-val">${mediaKm.toLocaleString('pt-BR')}</div><div class="proj-note">média dos ${n} meses</div></div>
+    <div class="proj-item"><div class="proj-label">KM/Veículo/Ano</div><div class="proj-val">~${kmPorVeiculo.toLocaleString('pt-BR')}</div><div class="proj-note">${vehicles.length} veículos</div></div>
+    <div class="proj-item"><div class="proj-label">Viagens/Mês</div><div class="proj-val">${mediaTrips}</div><div class="proj-note">média mensal TL</div></div>
+    <div class="proj-item"><div class="proj-label">Eficiência</div><div class="proj-val">${eficiencia}</div><div class="proj-note">viagens com KM válido</div></div>`;
+
+  // Tabela veículos
+  const tb=document.getElementById('vehicle-tbody'); tb.innerHTML='';
+  const maxKm=Math.max(...vehicles.map(v=>v.km),1);
+  vehicles.forEach((v,i)=>{
+    const pct=Math.round(v.km/maxKm*100);
+    const avg=v.km>0&&v.trips>0?(v.km/v.trips).toFixed(1):'—';
+    const col=PALETTE[i%PALETTE.length];
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><span class="vbadge">${v.id}</span></td>
       <td style="font-family:'Share Tech Mono',monospace;color:#7ab3cc">${v.trips}</td>
       <td style="font-family:'Share Tech Mono',monospace;color:${col}">${v.km.toLocaleString('pt-BR')}</td>
       <td style="font-family:'Share Tech Mono',monospace;color:#7ab3cc">${avg} km</td>
       <td style="font-family:'Share Tech Mono',monospace;color:#7ab3cc">${v.jornada}h</td>
-      <td>
-        <div class="bar-inline">
-          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
-          <div class="bar-val" style="color:${col}">${pct}%</div>
-        </div>
-      </td>`;
-    tbody.appendChild(row);
+      <td><div class="bar-inline"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div><div class="bar-val" style="color:${col}">${pct}%</div></div></td>`;
+    tb.appendChild(tr);
   });
-}
 
-// ── TOP LOJAS ─────────────────────────────────────────────────
-function renderLojas(){
-  const container = document.getElementById('loja-list');
-  container.innerHTML = '';
-  const max = DATA.lojaTop[0]?.count || 1;
-  DATA.lojaTop.forEach((l,i)=>{
-    const pct = Math.round(l.count/max*100);
-    const col = COLORS.palette[i % COLORS.palette.length];
-    const item = document.createElement('div');
-    item.className = 'loja-item';
-    item.innerHTML = `
-      <div class="loja-rank" style="color:${col}">${String(i+1).padStart(2,'0')}</div>
-      <div>
-        <div class="loja-name" style="font-size:12px">${l.nome}</div>
-        <div class="bar-track" style="height:3px;margin-top:3px">
-          <div class="bar-fill" style="width:${pct}%;background:${col}"></div>
-        </div>
-      </div>
-      <div class="loja-count" style="color:${col}">${l.count}×</div>`;
-    container.appendChild(item);
+  // Lojas
+  const ll=document.getElementById('loja-list'); ll.innerHTML='';
+  const maxL=lojaTop[0]?.count||1;
+  lojaTop.forEach((l,i)=>{
+    const pct=Math.round(l.count/maxL*100);
+    const col=PALETTE[i%PALETTE.length];
+    const d2=document.createElement('div'); d2.className='loja-item';
+    d2.innerHTML=`<div class="loja-rank" style="color:${col}">${String(i+1).padStart(2,'0')}</div><div><div class="loja-name">${l.nome}</div><div class="bar-track" style="height:3px;margin-top:3px"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div></div><div class="loja-count" style="color:${col}">${l.count}×</div>`;
+    ll.appendChild(d2);
   });
-}
 
-// ── DIAS DA SEMANA ────────────────────────────────────────────
-function renderChartDias(){
+  // Motoristas
+  const mg=document.getElementById('mot-grid'); mg.innerHTML='';
+  const maxV=motoristasData[0]?.viagens||1;
+  motoristasData.forEach((m,i)=>{
+    const pct=Math.round(m.viagens/maxV*100);
+    const col=PALETTE[i%PALETTE.length];
+    const d3=document.createElement('div'); d3.className='mot-item';
+    d3.innerHTML=`<div class="mot-name" style="color:${col}">${m.nome}</div><div class="mot-stat">${m.viagens} viagens · ${m.km.toLocaleString('pt-BR')} km</div><div class="bar-track" style="margin-top:4px"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>`;
+    mg.appendChild(d3);
+  });
+
+  // GRÁFICO: KM mensal + projeção
+  destroyChart('chartKmMensal');
+  (()=>{
+    const ctx=document.getElementById('chartKmMensal').getContext('2d');
+    const grad=mkGrad(ctx,'rgba(0,212,255,.4)','rgba(0,212,255,0)');
+    const allMo=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const realData=[...sortedMonths.map(m=>m.km),...Array(Math.max(0,12-n)).fill(null)];
+    const projKm=Array.from({length:12},(_,i)=>i<n?null:Math.max(0,Math.round(intercept+slope*i)));
+    charts['chartKmMensal']=new Chart(ctx,{type:'line',data:{labels:allMo,datasets:[
+      {label:'KM Real',data:realData,borderColor:'#00d4ff',backgroundColor:grad,borderWidth:2.5,pointBackgroundColor:'#00d4ff',pointRadius:5,tension:.3,fill:true},
+      {label:'Projeção',data:projKm,borderColor:'#ffd700',backgroundColor:'transparent',borderWidth:2,borderDash:[6,4],pointBackgroundColor:'#ffd700',pointRadius:4,tension:.3}
+    ]},options:{responsive:true,plugins:{legend:{labels:{color:'#7ab3cc',font:{size:11}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${(c.parsed.y||0).toLocaleString('pt-BR')} km`}}},scales:{x:{grid:{color:'rgba(13,58,92,.4)'},ticks:{color:'#7ab3cc'}},y:{grid:{color:'rgba(13,58,92,.4)'},ticks:{color:'#7ab3cc',callback:v=>v.toLocaleString('pt-BR')}}}}});
+  })();
+
+  // GRÁFICO: Viagens por mês
+  destroyChart('chartViagens');
+  (()=>{
+    const ctx=document.getElementById('chartViagens').getContext('2d');
+    charts['chartViagens']=new Chart(ctx,{type:'bar',data:{labels:sortedMonths.map(m=>m.label.split('/')[0]),datasets:[{label:'Viagens',data:sortedMonths.map(m=>m.trips),backgroundColor:sortedMonths.map((_,i)=>`rgba(255,107,53,${.35+i*.1})`),borderColor:'#ff6b35',borderWidth:1,borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#7ab3cc'}},y:{grid:{color:'rgba(13,58,92,.4)'},ticks:{color:'#7ab3cc'}}}}});
+  })();
+
+  // GRÁFICO: Pizza frota
+  destroyChart('chartPizza');
+  (()=>{
+    const ctx=document.getElementById('chartPizza').getContext('2d');
+    const vv=vehicles.filter(v=>v.km>0);
+    charts['chartPizza']=new Chart(ctx,{type:'doughnut',data:{labels:vv.map(v=>v.id.split(' ').slice(0,2).join(' ')),datasets:[{data:vv.map(v=>v.km),backgroundColor:PALETTE.slice(0,vv.length).map(c=>c+'CC'),borderColor:PALETTE.slice(0,vv.length),borderWidth:2,hoverOffset:8}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#7ab3cc',font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toLocaleString('pt-BR')} km`}}}}});
+  })();
+
+  // GRÁFICO: Dias da semana
   destroyChart('chartDias');
-  const ctx = document.getElementById('chartDias').getContext('2d');
-  const colors = DATA.weekdays.map((_,i)=> i===4 ? COLORS.orange : `rgba(0,212,255,${0.3+i*0.1})`);
-  charts['chartDias'] = new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels:DATA.weekdays,
-      datasets:[{ label:'Viagens', data:DATA.weekdayTrips,
-        backgroundColor:colors, borderColor:colors, borderWidth:1, borderRadius:3 }]
-    },
-    options:{
-      responsive:true, indexAxis:'y',
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{grid:{color:'rgba(13,58,92,0.4)'},ticks:{color:'#7ab3cc'}},
-        y:{grid:{display:false},ticks:{color:'#e8f4fd',font:{size:12}}}
-      }
-    }
-  });
-}
+  (()=>{
+    const ctx=document.getElementById('chartDias').getContext('2d');
+    const labels=['Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const data=[weekday[1],weekday[2],weekday[3],weekday[4],weekday[5],weekday[6]];
+    const colors=labels.map((_,i)=>i===4?'rgba(255,107,53,.85)':`rgba(0,212,255,${.25+i*.08})`);
+    charts['chartDias']=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Viagens',data,backgroundColor:colors,borderColor:colors,borderWidth:1,borderRadius:3}]},options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(13,58,92,.4)'},ticks:{color:'#7ab3cc'}},y:{grid:{display:false},ticks:{color:'#e8f4fd',font:{size:11}}}}}});
+  })();
 
-// ── HORAS DE SAÍDA ────────────────────────────────────────────
-function renderChartHoras(){
+  // GRÁFICO: Horas
   destroyChart('chartHoras');
-  const ctx = document.getElementById('chartHoras').getContext('2d');
-  const grad = makeGradient(ctx,'rgba(167,139,250,0.5)','rgba(167,139,250,0)');
-  // Filtrar horas com atividade
-  const active = DATA.hoursLabels
-    .map((h,i)=>({h,v:DATA.hourTrips[i]}))
-    .filter(x=>x.v>0);
-  charts['chartHoras'] = new Chart(ctx,{
-    type:'line',
-    data:{
-      labels:active.map(x=>x.h),
-      datasets:[{ label:'Saídas', data:active.map(x=>x.v),
-        backgroundColor:grad, borderColor:COLORS.purple, borderWidth:2,
-        fill:true, tension:0.4, pointBackgroundColor:COLORS.purple, pointRadius:3 }]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{grid:{color:'rgba(13,58,92,0.3)'},ticks:{color:'#7ab3cc',font:{size:10}}},
-        y:{grid:{color:'rgba(13,58,92,0.3)'},ticks:{color:'#7ab3cc'}}
-      }
-    }
-  });
-}
+  (()=>{
+    const ctx=document.getElementById('chartHoras').getContext('2d');
+    const grad=mkGrad(ctx,'rgba(167,139,250,.5)','rgba(167,139,250,0)');
+    const active=Array.from({length:19},(_,i)=>i+4).map(h=>({h:`${String(h).padStart(2,'0')}h`,v:hourCount[h]||0})).filter(x=>x.v>0);
+    charts['chartHoras']=new Chart(ctx,{type:'line',data:{labels:active.map(x=>x.h),datasets:[{label:'Saídas',data:active.map(x=>x.v),backgroundColor:grad,borderColor:'#a78bfa',borderWidth:2,fill:true,tension:.4,pointBackgroundColor:'#a78bfa',pointRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(13,58,92,.3)'},ticks:{color:'#7ab3cc',font:{size:10}}},y:{grid:{color:'rgba(13,58,92,.3)'},ticks:{color:'#7ab3cc'}}}}});
+  })();
 
-// ── PROJEÇÃO ANUAL ────────────────────────────────────────────
-function renderChartProjecao(){
+  // GRÁFICO: Projeção anual
   destroyChart('chartProjecao');
-  const ctx = document.getElementById('chartProjecao').getContext('2d');
-  const allMonths=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const n = DATA.sortedMonths.length;
-  const realFull = [...DATA.sortedMonths.map(m=>m.km), ...Array(Math.max(0,12-n)).fill(null)];
-  charts['chartProjecao'] = new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels:allMonths,
-      datasets:[
-        { label:'Real', data:realFull,
-          backgroundColor:'rgba(0,212,255,0.4)', borderColor:COLORS.accent, borderWidth:1, borderRadius:2 },
-        { label:'Projeção', data:DATA.projKm,
-          backgroundColor:'rgba(255,215,0,0.25)', borderColor:COLORS.gold, borderWidth:1, borderRadius:2 }
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{labels:{color:'#7ab3cc',font:{size:10},boxWidth:8}}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:'#7ab3cc',font:{size:9}}},
-        y:{grid:{color:'rgba(13,58,92,0.3)'},ticks:{color:'#7ab3cc',callback:v=>v?.toLocaleString('pt-BR')??''}}
-      }
-    }
-  });
-}
+  (()=>{
+    const ctx=document.getElementById('chartProjecao').getContext('2d');
+    const allMo=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const realF=[...sortedMonths.map(m=>m.km),...Array(Math.max(0,12-n)).fill(null)];
+    const projF=Array.from({length:12},(_,i)=>i<n?null:Math.max(0,Math.round(intercept+slope*i)));
+    charts['chartProjecao']=new Chart(ctx,{type:'bar',data:{labels:allMo,datasets:[{label:'Real',data:realF,backgroundColor:'rgba(0,212,255,.4)',borderColor:'#00d4ff',borderWidth:1,borderRadius:2},{label:'Projeção',data:projF,backgroundColor:'rgba(255,215,0,.25)',borderColor:'#ffd700',borderWidth:1,borderRadius:2}]},options:{responsive:true,plugins:{legend:{labels:{color:'#7ab3cc',font:{size:10},boxWidth:8}}},scales:{x:{grid:{display:false},ticks:{color:'#7ab3cc',font:{size:9}}},y:{grid:{color:'rgba(13,58,92,.3)'},ticks:{color:'#7ab3cc',callback:v=>v?.toLocaleString('pt-BR')??''}}}}});
+  })();
 
-// ── MOTORISTAS ────────────────────────────────────────────────
-function renderMotoristas(){
-  const g = document.getElementById('mot-grid');
-  g.innerHTML = '';
-  const maxV = DATA.motoristasData[0]?.viagens || 1;
-  DATA.motoristasData.forEach((m,i)=>{
-    const pct = Math.round(m.viagens/maxV*100);
-    const col = COLORS.palette[i % COLORS.palette.length];
-    const item = document.createElement('div');
-    item.className = 'mot-item';
-    item.innerHTML = `
-      <div class="mot-name" style="color:${col}">${m.nome}</div>
-      <div class="mot-stat">${m.viagens} viagens · ${m.km.toLocaleString('pt-BR')} km</div>
-      <div class="bar-track" style="margin-top:4px">
-        <div class="bar-fill" style="width:${pct}%;background:${col}"></div>
-      </div>`;
-    g.appendChild(item);
-  });
-}
-
-// ── TENDÊNCIA ─────────────────────────────────────────────────
-function renderChartTendencia(){
+  // GRÁFICO: Tendência
   destroyChart('chartTendencia');
-  const ctx = document.getElementById('chartTendencia').getContext('2d');
-  const labels = DATA.sortedMonths.map(m=>m.label.split('/')[0]);
-  const baseKm = DATA.sortedMonths[0]?.km || 1;
-  const baseT  = DATA.sortedMonths[0]?.trips || 1;
-  const idxKm = DATA.sortedMonths.map(m=>Math.round(m.km/baseKm*100));
-  const idxT  = DATA.sortedMonths.map(m=>Math.round(m.trips/baseT*100));
-  charts['chartTendencia'] = new Chart(ctx,{
-    type:'line',
-    data:{
-      labels,
-      datasets:[
-        { label:'Índice KM (base=100)', data:idxKm, borderColor:COLORS.accent,
-          backgroundColor:'transparent', borderWidth:2.5, pointRadius:5, pointBackgroundColor:COLORS.accent, tension:0.3 },
-        { label:'Índice Viagens (base=100)', data:idxT, borderColor:COLORS.green,
-          backgroundColor:'transparent', borderWidth:2.5, borderDash:[5,3],
-          pointRadius:5, pointBackgroundColor:COLORS.green, tension:0.3 }
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{labels:{color:'#7ab3cc',font:{size:11}}}},
-      scales:{
-        x:{grid:{color:'rgba(13,58,92,0.4)'},ticks:{color:'#7ab3cc'}},
-        y:{grid:{color:'rgba(13,58,92,0.4)'},ticks:{color:'#7ab3cc'},min:50}
-      }
-    }
-  });
-}
+  (()=>{
+    const ctx=document.getElementById('chartTendencia').getContext('2d');
+    const labels=sortedMonths.map(m=>m.label.split('/')[0]);
+    const bKm=sortedMonths[0]?.km||1, bT=sortedMonths[0]?.trips||1;
+    const idxKm=sortedMonths.map(m=>Math.round(m.km/bKm*100));
+    const idxT=sortedMonths.map(m=>Math.round(m.trips/bT*100));
+    charts['chartTendencia']=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Índice KM (base=100)',data:idxKm,borderColor:'#00d4ff',backgroundColor:'transparent',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#00d4ff',tension:.3},{label:'Índice Viagens (base=100)',data:idxT,borderColor:'#00ff9f',backgroundColor:'transparent',borderWidth:2.5,borderDash:[5,3],pointRadius:5,pointBackgroundColor:'#00ff9f',tension:.3}]},options:{responsive:true,plugins:{legend:{labels:{color:'#7ab3cc',font:{size:11}}}},scales:{x:{grid:{color:'rgba(13,58,92,.4)'},ticks:{color:'#7ab3cc'}},y:{grid:{color:'rgba(13,58,92,.4)'},ticks:{color:'#7ab3cc'},min:50}}}});
+  })();
 
-// ── EFICIÊNCIA KM MÉDIO ───────────────────────────────────────
-function renderChartEficiencia(){
+  // GRÁFICO: Eficiência
   destroyChart('chartEficiencia');
-  const ctx = document.getElementById('chartEficiencia').getContext('2d');
-  const vv = DATA.vehicles.filter(v=>v.km>0&&v.trips>0);
-  const avgKms = vv.map(v=>parseFloat((v.km/v.trips).toFixed(1)));
-  const colors = avgKms.map(k=>k>60?COLORS.orange:k>40?COLORS.accent:COLORS.green);
-  charts['chartEficiencia'] = new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels: vv.map(v=>v.id.split(' ')[1]),
-      datasets:[{ label:'km médio/viagem', data:avgKms,
-        backgroundColor:colors.map(c=>c.replace('1)','0.4)')),
-        borderColor:colors, borderWidth:2, borderRadius:4 }]
-    },
-    options:{
-      responsive:true,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>`${c.parsed.y} km/viagem`}} },
-      scales:{
-        x:{grid:{display:false},ticks:{color:'#e8f4fd',font:{size:10}}},
-        y:{grid:{color:'rgba(13,58,92,0.4)'},ticks:{color:'#7ab3cc',callback:v=>v+' km'},suggestedMin:20}
-      }
-    }
-  });
-}
-
-// ── CARDS PROJEÇÃO ────────────────────────────────────────────
-function renderProjectionCards(){
-  const meses = DATA.sortedMonths.length || 1;
-  const mediaKm = Math.round(DATA.totalKm/meses);
-  const mediaTrips = Math.round(DATA.validKmTrips/meses);
-  const projAnualKm = Math.round(mediaKm * 12);
-  const projAnualTrips = Math.round(mediaTrips * 12);
-  const kmPorVeiculo = DATA.frota > 0 ? Math.round(projAnualKm/DATA.frota) : 0;
-  const totalHorasAnual = Math.round(DATA.avgJornada * DATA.validKmTrips * 12/meses);
-
-  const grid = document.querySelector('.proj-grid');
-  if(!grid) return;
-  grid.innerHTML = `
-    <div class="proj-item">
-      <div class="proj-label">KM Projetado/Ano</div>
-      <div class="proj-val">${projAnualKm.toLocaleString('pt-BR')}</div>
-      <div class="proj-note">base: ${meses} ${meses===1?'mês':'meses'} × 12</div>
-    </div>
-    <div class="proj-item">
-      <div class="proj-label">Viagens/Ano</div>
-      <div class="proj-val">${projAnualTrips.toLocaleString('pt-BR')}</div>
-      <div class="proj-note">de ${DATA.validKmTrips} viagens válidas</div>
-    </div>
-    <div class="proj-item">
-      <div class="proj-label">Média KM/Mês</div>
-      <div class="proj-val">${mediaKm.toLocaleString('pt-BR')}</div>
-      <div class="proj-note">média dos ${meses} meses</div>
-    </div>
-    <div class="proj-item">
-      <div class="proj-label">Jornadas/Ano (h)</div>
-      <div class="proj-val">~${totalHorasAnual.toLocaleString('pt-BR')}</div>
-      <div class="proj-note">horas totais projetadas</div>
-    </div>
-    <div class="proj-item">
-      <div class="proj-label">Viagens/Mês (Média)</div>
-      <div class="proj-val">${mediaTrips}</div>
-      <div class="proj-note">média mensal TL</div>
-    </div>
-    <div class="proj-item">
-      <div class="proj-label">KM/Veículo/Ano</div>
-      <div class="proj-val">~${kmPorVeiculo.toLocaleString('pt-BR')}</div>
-      <div class="proj-note">${DATA.frota} veículos na frota</div>
-    </div>`;
+  (()=>{
+    const ctx=document.getElementById('chartEficiencia').getContext('2d');
+    const vv=vehicles.filter(v=>v.km>0&&v.trips>0);
+    const avgs=vv.map(v=>parseFloat((v.km/v.trips).toFixed(1)));
+    const colors=avgs.map(k=>k>60?'rgba(255,107,53,1)':k>40?'rgba(0,212,255,1)':'rgba(0,255,159,1)');
+    charts['chartEficiencia']=new Chart(ctx,{type:'bar',data:{labels:vv.map(v=>v.id.split(' ')[1]),datasets:[{label:'km médio/viagem',data:avgs,backgroundColor:colors.map(c=>c.replace('1)','0.4)')),borderColor:colors,borderWidth:2,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y} km/viagem`}}},scales:{x:{grid:{display:false},ticks:{color:'#e8f4fd',font:{size:10}}},y:{grid:{color:'rgba(13,58,92,.4)'},ticks:{color:'#7ab3cc',callback:v=>v+' km'},suggestedMin:20}}}});
+  })();
 }
 
 // ══════════════════════════════════════════════════════════════
-//  RENDER COMPLETO
+//  SYNC — IDÊNTICO AO FLEETCONTROL PRO
 // ══════════════════════════════════════════════════════════════
-function renderAll(){
-  renderKPIs();
-  renderChartKmMensal();
-  renderChartViagens();
-  renderVehicleTable();
-  renderChartPizza();
-  renderLojas();
-  renderChartDias();
-  renderChartHoras();
-  renderProjectionCards();
-  renderChartProjecao();
-  renderMotoristas();
-  renderChartTendencia();
-  renderChartEficiencia();
+async function syncSheets(){
+  const btn    = document.getElementById('btn-sync');
+  const icon   = document.getElementById('sync-icon');
+  const lbl    = document.getElementById('sync-lbl');
+  const stEl   = document.getElementById('sync-status');
 
-  // Período selector dinâmico
-  buildPeriodSelector(DATA.sortedMonths);
+  if(btn){ btn.disabled=true; btn.classList.add('syncing'); }
+  if(icon) icon.textContent='🔄';
+  if(lbl)  lbl.textContent='SINCRONIZANDO...';
+  if(stEl){ stEl.style.display='inline-block'; stEl.className='sync-status sync-loading'; stEl.textContent='⏳ buscando dados...'; }
 
-  // Status bar
-  const now = new Date().toLocaleTimeString('pt-BR');
-  const el = document.getElementById('update-time');
-  if(el) el.textContent = now;
-  const src = document.getElementById('last-update');
-  if(src) src.innerHTML = `⟳ ÚLTIMA SINCRONIZAÇÃO COM GOOGLE SHEETS: <span id="update-time">${now}</span> &nbsp;|&nbsp; PRÓXIMA EM: <span id="next-update">3:00</span> &nbsp;|&nbsp; ${DATA.totalTrips.toLocaleString('pt-BR')} registros TL · ${DATA.diasNaBase} dias na base`;
-}
+  try{
+    const res = await fetch(CSV_URL+'&_t='+Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const csv = await res.text();
+    if(!csv||csv.length<50) throw new Error('Resposta vazia ou inválida');
 
-// ══════════════════════════════════════════════════════════════
-//  EMPTY DATA (fallback)
-// ══════════════════════════════════════════════════════════════
-function _emptyData(){
-  return { totalTrips:0, totalKm:0, validKmTrips:0, frota:0, motoristas:0,
-    avgJornada:0, avgKmViagem:0, eficiencia:0, diasNaBase:0,
-    byMonth:{}, sortedMonths:[], vehicles:[], motoristasData:[],
-    lojaTop:[], weekdays:['Seg','Ter','Qua','Qui','Sex','Sáb'],
-    weekdayTrips:[0,0,0,0,0,0], hoursLabels:[], hourTrips:[],
-    slope:0, intercept:0, n:0, projKm:Array(12).fill(null) };
-}
+    const parsed = parseCSV(csv);
+    if(!parsed.length) throw new Error('Nenhum registro TL encontrado no CSV');
 
-// ══════════════════════════════════════════════════════════════
-//  FETCH — padrão FleetControl Pro (sem PapaParse)
-// ══════════════════════════════════════════════════════════════
-const GKEY_URL       = 'tl_sheets_url';
-const GKEY_LASTSYNC  = 'tl_sheets_lastsync';
-let sheetsTimer = null;
+    loadAllRoutes(parsed);
+    try{ localStorage.setItem(LSYNC, Date.now().toString()); }catch(e){}
 
-async function fetchAndRender(){
-  // Pega URL do localStorage ou usa a padrão hardcoded
-  const url = (localStorage.getItem(GKEY_URL) || CSV_URL) + '&_t=' + Date.now();
+    const now = new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('update-time').textContent = now;
+    secondsLeft = 180;
 
-  // Feedback visual no botão
-  const btn   = document.querySelector('.btn-sync');
-  const badge = document.querySelector('.badge-ao-vivo');
-  if(btn){ btn.innerHTML = '⟳ SINCRONIZANDO...'; btn.style.opacity = '0.7'; btn.disabled = true; }
-
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const csvText = await res.text();
-    if(!csvText || csvText.length < 50) throw new Error('Resposta vazia ou inválida');
-
-    DATA = parseCSV(csvText);
-    if(!DATA || DATA.totalTrips === 0) throw new Error('Nenhum registro TL encontrado no CSV');
-
-    renderAll();
-
-    // Salva timestamp da última sync
-    localStorage.setItem(GKEY_LASTSYNC, Date.now().toString());
-    const ts = new Date().toLocaleTimeString('pt-BR');
-    console.log(`[TL Dashboard] ✅ Sync OK — ${DATA.totalTrips} registros TL — ${ts}`);
-
-    // Atualiza badge "Ao Vivo" para verde por 3s
-    if(badge){ badge.style.background='linear-gradient(135deg,#1a7a3a,#0d5228)'; badge.style.color='#00ff9f'; badge.style.borderColor='rgba(0,255,159,0.4)'; setTimeout(()=>{ badge.style.background=''; badge.style.color=''; badge.style.borderColor=''; }, 3000); }
+    if(stEl){ stEl.className='sync-status sync-ok'; stEl.textContent='✅ '+parsed.length+' registros · '+availDates.length+' dias'; }
+    console.log('[TL] ✅ Sync OK —', parsed.length, 'registros TL —', now);
 
   } catch(err){
-    console.error('[TL Dashboard] ❌ Erro ao sincronizar:', err.message);
-    // Mostra erro na status bar sem travar o dashboard
-    const el = document.getElementById('last-update');
-    if(el) el.innerHTML = `⚠️ ERRO NA SINCRONIZAÇÃO: ${err.message} — tentando novamente em 3 min &nbsp;|&nbsp; PRÓXIMA EM: <span id="next-update">3:00</span>`;
-    if(badge){ badge.style.background='linear-gradient(135deg,#7a1a1a,#5c1010)'; badge.style.color='#ff3860'; setTimeout(()=>{ badge.style.background=''; badge.style.color=''; }, 5000); }
+    console.error('[TL] ❌ Sync erro:', err.message);
+    if(stEl){ stEl.className='sync-status sync-err'; stEl.textContent='❌ '+err.message; }
+    toast('❌ '+err.message);
 
-  } finally {
-    if(btn){ btn.innerHTML = '<span class="sync-icon">☁</span> SINCRONIZAR'; btn.style.opacity = '1'; btn.disabled = false; }
-    secondsLeft = 180;
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-//  INICIALIZAÇÃO
-// ══════════════════════════════════════════════════════════════
-window.addEventListener('load', async () => {
-  // Salva a URL padrão no localStorage na primeira vez
-  if(!localStorage.getItem(GKEY_URL)){
-    localStorage.setItem(GKEY_URL, CSV_URL);
-  }
-
-  // 1ª sincronização
-  await fetchAndRender();
-
-  // Esconde loading
-  const loading = document.getElementById('loading');
-  if(loading){
-    loading.style.transition = 'opacity 0.6s';
-    loading.style.opacity = '0';
-    setTimeout(() => loading.remove(), 600);
-  }
-
-  // Timer de auto-refresh a cada 3 minutos
-  sheetsTimer = setInterval(fetchAndRender, REFRESH_INTERVAL);
-});
-</script>
-</body>
-</html>
+  } finally{
+    if(btn){ btn.disabled=false; btn.classList.remove('syncing'); }
+    if(icon) icon.te
