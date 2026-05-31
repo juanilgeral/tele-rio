@@ -76,6 +76,101 @@
             margin: 0 auto;
         }
         
+        /* VISÃO GERAL DO DIA */
+        .visao-geral {
+            background: #252d47;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .visao-geral h2 {
+            color: #f59e0b;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #f59e0b;
+            padding-bottom: 10px;
+        }
+        
+        .ops-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .op-card {
+            background: linear-gradient(135deg, #1a1f3a 0%, #252d47 100%);
+            padding: 20px;
+            border-radius: 8px;
+            border-top: 3px solid #f59e0b;
+            text-align: center;
+        }
+        
+        .op-card.cv { border-top-color: #3b82f6; }
+        .op-card.ls { border-top-color: #10b981; }
+        .op-card.tl { border-top-color: #f59e0b; }
+        .op-card.ht { border-top-color: #ef4444; }
+        
+        .op-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .op-name.cv { color: #3b82f6; }
+        .op-name.ls { color: #10b981; }
+        .op-name.tl { color: #f59e0b; }
+        .op-name.ht { color: #ef4444; }
+        
+        .op-info {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        
+        .op-reserve {
+            color: #3b82f6;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .metricas-dia {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .metrica-item {
+            background: #1a1f3a;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .metrica-icon {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+        }
+        
+        .metrica-valor {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 5px;
+        }
+        
+        .metrica-label {
+            font-size: 0.75em;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
         .kpis {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -203,12 +298,6 @@
             color: #f59e0b;
         }
         
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #f59e0b;
-        }
-        
         .sync-banner {
             background: #78350f;
             border: 2px solid #f59e0b;
@@ -260,24 +349,83 @@
             <span>☁️ Sincronizando dados...</span>
         </div>
         
+        <!-- VISÃO GERAL DO DIA -->
+        <div class="visao-geral">
+            <h2>📋 VISÃO GERAL DO DIA</h2>
+            
+            <!-- Cards por OP -->
+            <div class="ops-container">
+                <div class="op-card cv">
+                    <div class="op-name cv">CV</div>
+                    <div class="op-info">Veículos: <span id="cv-veiculos">—</span></div>
+                    <div class="op-info">Motoristas: <span id="cv-motoristas">—</span></div>
+                    <div class="op-reserve">🔵 1 reserva</div>
+                </div>
+                
+                <div class="op-card ls">
+                    <div class="op-name ls">LS</div>
+                    <div class="op-info">Veículos: <span id="ls-veiculos">—</span></div>
+                    <div class="op-info">Motoristas: <span id="ls-motoristas">—</span></div>
+                    <div class="op-reserve">🔵 0 reservas</div>
+                </div>
+                
+                <div class="op-card tl">
+                    <div class="op-name tl">TL</div>
+                    <div class="op-info">Veículos: <span id="tl-veiculos">—</span></div>
+                    <div class="op-info">Motoristas: <span id="tl-motoristas">—</span></div>
+                    <div class="op-reserve">🔵 0 reservas</div>
+                </div>
+                
+                <div class="op-card ht">
+                    <div class="op-name ht">HT</div>
+                    <div class="op-info">Veículos: <span id="ht-veiculos">—</span></div>
+                    <div class="op-info">Motoristas: <span id="ht-motoristas">—</span></div>
+                    <div class="op-reserve">🔵 0 reservas</div>
+                </div>
+            </div>
+            
+            <!-- Métricas do Dia -->
+            <div class="metricas-dia">
+                <div class="metrica-item">
+                    <div class="metrica-icon">🚗</div>
+                    <div class="metrica-valor" id="totalVeiculos">—</div>
+                    <div class="metrica-label">Veículos</div>
+                </div>
+                <div class="metrica-item">
+                    <div class="metrica-icon">🚛</div>
+                    <div class="metrica-valor" id="emTransito">—</div>
+                    <div class="metrica-label">Em Trânsito</div>
+                </div>
+                <div class="metrica-item">
+                    <div class="metrica-icon">🕐</div>
+                    <div class="metrica-valor" id="programadas">—</div>
+                    <div class="metrica-label">Programadas</div>
+                </div>
+                <div class="metrica-item">
+                    <div class="metrica-icon">👨‍✈️</div>
+                    <div class="metrica-valor" id="motoristasAtivos">—</div>
+                    <div class="metrica-label">Motoristas</div>
+                </div>
+                <div class="metrica-item">
+                    <div class="metrica-icon">📌</div>
+                    <div class="metrica-valor" id="rotas">—</div>
+                    <div class="metrica-label">Rotas</div>
+                </div>
+                <div class="metrica-item">
+                    <div class="metrica-icon">🏥</div>
+                    <div class="metrica-valor" id="afastados">—</div>
+                    <div class="metrica-label">Afastados</div>
+                </div>
+                <div class="metrica-item">
+                    <div class="metrica-icon">📅</div>
+                    <div class="metrica-valor" id="diasCSV">—</div>
+                    <div class="metrica-label">Dias no CSV</div>
+                </div>
+            </div>
+        </div>
+        
         <!-- KPIs Principais -->
         <div class="kpis" id="kpis">
-            <div class="kpi-card">
-                <div class="kpi-label">Veículos no Dia</div>
-                <div class="kpi-value" id="veiculosDia">—</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Em Trânsito</div>
-                <div class="kpi-value" id="emTransito">—</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Programadas</div>
-                <div class="kpi-value" id="programadas">—</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Motoristas Ativos</div>
-                <div class="kpi-value" id="motoristasAtivos">—</div>
-            </div>
             <div class="kpi-card">
                 <div class="kpi-label">KM Total</div>
                 <div class="kpi-value" id="kmTotal">—</div>
@@ -285,6 +433,14 @@
             <div class="kpi-card">
                 <div class="kpi-label">Entregas</div>
                 <div class="kpi-value" id="totalEntregas">—</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Tempo Médio</div>
+                <div class="kpi-value" id="tempoMedio">—h</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">KM Médio</div>
+                <div class="kpi-value" id="kmMedio">—</div>
             </div>
         </div>
         
@@ -303,14 +459,6 @@
                 <div class="indicador">
                     <div class="indicador-label">Custo por KM</div>
                     <div class="indicador-value" id="custoPorKm">R$ —</div>
-                </div>
-                <div class="indicador">
-                    <div class="indicador-label">KM Médio</div>
-                    <div class="indicador-value" id="kmMedio">—</div>
-                </div>
-                <div class="indicador">
-                    <div class="indicador-label">Tempo Médio</div>
-                    <div class="indicador-value" id="tempoMedio">—h</div>
                 </div>
                 <div class="indicador">
                     <div class="indicador-label">Disponibilidade</div>
@@ -344,6 +492,7 @@
             <table id="tabelaKM">
                 <thead>
                     <tr>
+                        <th>OP</th>
                         <th>Veículo</th>
                         <th>Motorista</th>
                         <th>KM</th>
@@ -354,7 +503,7 @@
                     </tr>
                 </thead>
                 <tbody id="tabelaKMBody">
-                    <tr><td colspan="7" style="text-align: center; color: #aaa;">Carregando dados...</td></tr>
+                    <tr><td colspan="8" style="text-align: center; color: #aaa;">Carregando dados...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -365,6 +514,7 @@
             <table id="tabelaMotoristas">
                 <thead>
                     <tr>
+                        <th>OP</th>
                         <th>Motorista</th>
                         <th>Entregas</th>
                         <th>KM Total</th>
@@ -373,7 +523,7 @@
                     </tr>
                 </thead>
                 <tbody id="tabelaMotoristasBody">
-                    <tr><td colspan="5" style="text-align: center; color: #aaa;">Carregando dados...</td></tr>
+                    <tr><td colspan="6" style="text-align: center; color: #aaa;">Carregando dados...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -452,10 +602,7 @@
                 headers.forEach((header, idx) => {
                     obj[header] = valores[idx] ? valores[idx].trim() : '';
                 });
-                
-                if (obj.OP === 'TL') {
-                    dados.push(obj);
-                }
+                dados.push(obj);
             }
             
             atualizarDashboard();
@@ -464,25 +611,52 @@
         function atualizarDashboard() {
             if (dados.length === 0) return;
             
-            // KPIs
-            const veiculos = new Set(dados.map(d => d.VEICULO)).size;
-            const motoristas = new Set(dados.map(d => d.MOTORISTA)).size;
-            const kmTotal = dados.reduce((sum, d) => sum + (parseFloat(d.KM_PERCORRIDO) || 0), 0);
-            const entregas = dados.length;
+            // Separar por OP
+            const dadosPorOP = {};
+            ['CV', 'LS', 'TL', 'HT'].forEach(op => {
+                dadosPorOP[op] = dados.filter(d => d.OP === op);
+            });
             
-            document.getElementById('veiculosDia').textContent = veiculos;
-            document.getElementById('emTransito').textContent = Math.ceil(entregas * 0.6);
-            document.getElementById('programadas').textContent = Math.ceil(entregas * 0.4);
-            document.getElementById('motoristasAtivos').textContent = motoristas;
-            document.getElementById('kmTotal').textContent = kmTotal.toFixed(0);
-            document.getElementById('totalEntregas').textContent = entregas;
+            // Atualizar Visão Geral por OP
+            Object.keys(dadosPorOP).forEach(op => {
+                const dadosOP = dadosPorOP[op];
+                const veiculos = new Set(dadosOP.map(d => d.VEICULO)).size;
+                const motoristas = new Set(dadosOP.map(d => d.MOTORISTA)).size;
+                
+                document.getElementById(`${op.toLowerCase()}-veiculos`).textContent = veiculos;
+                document.getElementById(`${op.toLowerCase()}-motoristas`).textContent = motoristas;
+            });
+            
+            // KPIs Gerais (TL)
+            const dadosTL = dadosPorOP['TL'];
+            const veiculosTL = new Set(dadosTL.map(d => d.VEICULO)).size;
+            const motoristasTL = new Set(dadosTL.map(d => d.MOTORISTA)).size;
+            const kmTotalTL = dadosTL.reduce((sum, d) => sum + (parseFloat(d.KM_PERCORRIDO) || 0), 0);
+            const entregasTL = dadosTL.length;
+            
+            // Métricas do Dia
+            const totalVeiculos = new Set(dados.map(d => d.VEICULO)).size;
+            const totalMotoristas = new Set(dados.map(d => d.MOTORISTA)).size;
+            const totalDatas = new Set(dados.map(d => d.DATA)).size;
+            
+            document.getElementById('totalVeiculos').textContent = totalVeiculos;
+            document.getElementById('emTransito').textContent = Math.ceil(entregasTL * 0.6);
+            document.getElementById('programadas').textContent = Math.ceil(entregasTL * 0.4);
+            document.getElementById('motoristasAtivos').textContent = motoristasTL;
+            document.getElementById('rotas').textContent = entregasTL;
+            document.getElementById('afastados').textContent = '0';
+            document.getElementById('diasCSV').textContent = totalDatas;
+            
+            // KPIs Principais
+            document.getElementById('kmTotal').textContent = kmTotalTL.toFixed(0);
+            document.getElementById('totalEntregas').textContent = entregasTL;
+            document.getElementById('tempoMedio').textContent = '10';
+            document.getElementById('kmMedio').textContent = (kmTotalTL / veiculosTL).toFixed(0);
             
             // Indicadores
             document.getElementById('pontualidade').textContent = '92%';
-            document.getElementById('utilizacao').textContent = ((entregas / (veiculos * 5)) * 100).toFixed(0);
+            document.getElementById('utilizacao').textContent = ((entregasTL / (veiculosTL * 5)) * 100).toFixed(0);
             document.getElementById('custoPorKm').textContent = 'R$ 2,50';
-            document.getElementById('kmMedio').textContent = (kmTotal / veiculos).toFixed(0);
-            document.getElementById('tempoMedio').textContent = '10';
             document.getElementById('disponibilidade').textContent = '85%';
             
             // Alertas
@@ -490,7 +664,7 @@
             alertasDiv.innerHTML = '';
             let alertCount = 0;
             
-            dados.forEach(d => {
+            dadosTL.forEach(d => {
                 if (alertCount >= 5) return;
                 const km = parseFloat(d.KM_PERCORRIDO) || 0;
                 if (km > 200) {
@@ -514,6 +688,7 @@
             dados.forEach(d => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
+                    <td>${d.OP}</td>
                     <td>${d.VEICULO}</td>
                     <td>${d.MOTORISTA}</td>
                     <td>${d.KM_PERCORRIDO}</td>
@@ -528,24 +703,28 @@
             // Tabela Motoristas
             const motoristasMap = {};
             dados.forEach(d => {
-                if (!motoristasMap[d.MOTORISTA]) {
-                    motoristasMap[d.MOTORISTA] = {
+                const key = `${d.OP}-${d.MOTORISTA}`;
+                if (!motoristasMap[key]) {
+                    motoristasMap[key] = {
+                        op: d.OP,
+                        motorista: d.MOTORISTA,
                         entregas: 0,
                         km: 0,
                         tempo: 0
                     };
                 }
-                motoristasMap[d.MOTORISTA].entregas++;
-                motoristasMap[d.MOTORISTA].km += parseFloat(d.KM_PERCORRIDO) || 0;
+                motoristasMap[key].entregas++;
+                motoristasMap[key].km += parseFloat(d.KM_PERCORRIDO) || 0;
             });
             
             const tabelaMotoristasBody = document.getElementById('tabelaMotoristasBody');
             tabelaMotoristasBody.innerHTML = '';
-            Object.keys(motoristasMap).forEach(motorista => {
-                const dados = motoristasMap[motorista];
+            Object.keys(motoristasMap).forEach(key => {
+                const dados = motoristasMap[key];
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${motorista}</td>
+                    <td>${dados.op}</td>
+                    <td>${dados.motorista}</td>
                     <td>${dados.entregas}</td>
                     <td>${dados.km.toFixed(0)}</td>
                     <td>10h 30m</td>
