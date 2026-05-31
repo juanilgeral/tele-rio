@@ -39,6 +39,9 @@
             text-align: right;
             font-size: 0.9em;
             color: #ccc;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
         }
         
         .sync-status {
@@ -331,13 +334,22 @@
             <p style="color: #aaa; margin-top: 5px;">FleetControl Pro - Operação de Transporte e Logística</p>
         </div>
         <div class="header-info">
-            <div class="sync-status">
-                <div class="sync-indicator" id="syncIndicator"></div>
-                <span id="syncText">● AO VIVO</span>
-            </div>
-            <div id="hora" style="margin-top: 5px;"></div>
-            <div style="font-size: 0.8em; color: #999; margin-top: 5px;">
-                Próxima sincronização em <span id="proximaSincronizacao">3:00</span>
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+                <div>
+                    <div class="sync-status">
+                        <div class="sync-indicator" id="syncIndicator"></div>
+                        <span id="syncText">● AO VIVO</span>
+                    </div>
+                    <div id="hora" style="margin-top: 5px; font-size: 0.9em;"></div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.85em; color: #f59e0b; margin-bottom: 5px;">
+                        ☁️ <span id="registrosCount">—</span> registros · <span id="diasCount">—</span> dias
+                    </div>
+                    <div style="font-size: 0.8em; color: #999;">
+                        Próxima sincronização em <span id="proximaSincronizacao">3:00</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -576,6 +588,12 @@
         
         function atualizarDashboard() {
             if (dados.length === 0) return;
+            
+            // Atualizar contadores de registros e dias
+            const totalRegistros = dados.length;
+            const totalDias = new Set(dados.map(d => d.DATA)).size;
+            document.getElementById('registrosCount').textContent = totalRegistros.toLocaleString('pt-BR');
+            document.getElementById('diasCount').textContent = totalDias;
             
             // Filtrar apenas TL
             const dadosTL = dados.filter(d => d.OP === 'TL');
