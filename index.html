@@ -349,77 +349,46 @@
             <span>☁️ Sincronizando dados...</span>
         </div>
         
-        <!-- VISÃO GERAL DO DIA -->
+        <!-- VISÃO GERAL DO DIA - TL -->
         <div class="visao-geral">
-            <h2>📋 VISÃO GERAL DO DIA</h2>
+            <h2>📋 VISÃO GERAL DO DIA - TL</h2>
             
-            <!-- Cards por OP -->
-            <div class="ops-container">
-                <div class="op-card cv">
-                    <div class="op-name cv">CV</div>
-                    <div class="op-info">Veículos: <span id="cv-veiculos">—</span></div>
-                    <div class="op-info">Motoristas: <span id="cv-motoristas">—</span></div>
-                    <div class="op-reserve">🔵 1 reserva</div>
-                </div>
-                
-                <div class="op-card ls">
-                    <div class="op-name ls">LS</div>
-                    <div class="op-info">Veículos: <span id="ls-veiculos">—</span></div>
-                    <div class="op-info">Motoristas: <span id="ls-motoristas">—</span></div>
-                    <div class="op-reserve">🔵 0 reservas</div>
-                </div>
-                
-                <div class="op-card tl">
-                    <div class="op-name tl">TL</div>
-                    <div class="op-info">Veículos: <span id="tl-veiculos">—</span></div>
-                    <div class="op-info">Motoristas: <span id="tl-motoristas">—</span></div>
-                    <div class="op-reserve">🔵 0 reservas</div>
-                </div>
-                
-                <div class="op-card ht">
-                    <div class="op-name ht">HT</div>
-                    <div class="op-info">Veículos: <span id="ht-veiculos">—</span></div>
-                    <div class="op-info">Motoristas: <span id="ht-motoristas">—</span></div>
-                    <div class="op-reserve">🔵 0 reservas</div>
-                </div>
-            </div>
-            
-            <!-- Métricas do Dia -->
+            <!-- Métricas do Dia TL -->
             <div class="metricas-dia">
                 <div class="metrica-item">
                     <div class="metrica-icon">🚗</div>
-                    <div class="metrica-valor" id="totalVeiculos">—</div>
+                    <div class="metrica-valor" id="tlVeiculos">—</div>
                     <div class="metrica-label">Veículos</div>
                 </div>
                 <div class="metrica-item">
                     <div class="metrica-icon">🚛</div>
-                    <div class="metrica-valor" id="emTransito">—</div>
+                    <div class="metrica-valor" id="tlEmTransito">—</div>
                     <div class="metrica-label">Em Trânsito</div>
                 </div>
                 <div class="metrica-item">
                     <div class="metrica-icon">🕐</div>
-                    <div class="metrica-valor" id="programadas">—</div>
+                    <div class="metrica-valor" id="tlProgramadas">—</div>
                     <div class="metrica-label">Programadas</div>
                 </div>
                 <div class="metrica-item">
                     <div class="metrica-icon">👨‍✈️</div>
-                    <div class="metrica-valor" id="motoristasAtivos">—</div>
+                    <div class="metrica-valor" id="tlMotoristas">—</div>
                     <div class="metrica-label">Motoristas</div>
                 </div>
                 <div class="metrica-item">
                     <div class="metrica-icon">📌</div>
-                    <div class="metrica-valor" id="rotas">—</div>
-                    <div class="metrica-label">Rotas</div>
+                    <div class="metrica-valor" id="tlRotas">—</div>
+                    <div class="metrica-label">Entregas</div>
                 </div>
                 <div class="metrica-item">
-                    <div class="metrica-icon">🏥</div>
-                    <div class="metrica-valor" id="afastados">—</div>
-                    <div class="metrica-label">Afastados</div>
+                    <div class="metrica-icon">⏱️</div>
+                    <div class="metrica-valor" id="tlTempoMedioLoja">—</div>
+                    <div class="metrica-label">Tempo Médio Loja</div>
                 </div>
                 <div class="metrica-item">
-                    <div class="metrica-icon">📅</div>
-                    <div class="metrica-valor" id="diasCSV">—</div>
-                    <div class="metrica-label">Dias no CSV</div>
+                    <div class="metrica-icon">🏪</div>
+                    <div class="metrica-valor" id="tlLojasAtendidas">—</div>
+                    <div class="metrica-label">Lojas Atendidas</div>
                 </div>
             </div>
         </div>
@@ -608,41 +577,36 @@
         function atualizarDashboard() {
             if (dados.length === 0) return;
             
-            // Separar por OP
-            const dadosPorOP = {};
-            ['CV', 'LS', 'TL', 'HT'].forEach(op => {
-                dadosPorOP[op] = dados.filter(d => d.OP === op);
-            });
-            
-            // Atualizar Visão Geral por OP
-            Object.keys(dadosPorOP).forEach(op => {
-                const dadosOP = dadosPorOP[op];
-                const veiculos = new Set(dadosOP.map(d => d.VEICULO)).size;
-                const motoristas = new Set(dadosOP.map(d => d.MOTORISTA)).size;
-                
-                document.getElementById(`${op.toLowerCase()}-veiculos`).textContent = veiculos;
-                document.getElementById(`${op.toLowerCase()}-motoristas`).textContent = motoristas;
-            });
-            
-            // KPIs Gerais (TL)
-            const dadosTL = dadosPorOP['TL'];
+            // Filtrar apenas TL
+            const dadosTL = dados.filter(d => d.OP === 'TL');
             const veiculosTL = new Set(dadosTL.map(d => d.VEICULO)).size;
             const motoristasTL = new Set(dadosTL.map(d => d.MOTORISTA)).size;
             const kmTotalTL = dadosTL.reduce((sum, d) => sum + (parseFloat(d.KM_PERCORRIDO) || 0), 0);
             const entregasTL = dadosTL.length;
             
-            // Métricas do Dia
-            const totalVeiculos = new Set(dados.map(d => d.VEICULO)).size;
-            const totalMotoristas = new Set(dados.map(d => d.MOTORISTA)).size;
-            const totalDatas = new Set(dados.map(d => d.DATA)).size;
+            // Métricas TL
+            const lojasPorTL = {};
+            let tempoTotalEmLoja = 0;
             
-            document.getElementById('totalVeiculos').textContent = totalVeiculos;
-            document.getElementById('emTransito').textContent = Math.ceil(entregasTL * 0.6);
-            document.getElementById('programadas').textContent = Math.ceil(entregasTL * 0.4);
-            document.getElementById('motoristasAtivos').textContent = motoristasTL;
-            document.getElementById('rotas').textContent = entregasTL;
-            document.getElementById('afastados').textContent = '0';
-            document.getElementById('diasCSV').textContent = totalDatas;
+            dadosTL.forEach(d => {
+                const loja = d['1ª_LOJA'] || 'N/A';
+                if (loja && loja !== 'N/A') {
+                    lojasPorTL[loja] = (lojasPorTL[loja] || 0) + 1;
+                    // Estimando tempo em loja (pode ser ajustado conforme seus dados)
+                    tempoTotalEmLoja += 1.5; // 1h 30m por parada
+                }
+            });
+            
+            const lojasAtendidas = Object.keys(lojasPorTL).length;
+            const tempoMedioLoja = lojasAtendidas > 0 ? (tempoTotalEmLoja / entregasTL).toFixed(2) : 0;
+            
+            document.getElementById('tlVeiculos').textContent = veiculosTL;
+            document.getElementById('tlEmTransito').textContent = Math.ceil(entregasTL * 0.6);
+            document.getElementById('tlProgramadas').textContent = Math.ceil(entregasTL * 0.4);
+            document.getElementById('tlMotoristas').textContent = motoristasTL;
+            document.getElementById('tlRotas').textContent = entregasTL;
+            document.getElementById('tlTempoMedioLoja').textContent = tempoMedioLoja + 'h';
+            document.getElementById('tlLojasAtendidas').textContent = lojasAtendidas;
             
             // KPIs Principais
             document.getElementById('kmTotal').textContent = kmTotalTL.toFixed(0);
@@ -656,7 +620,7 @@
 
             document.getElementById('disponibilidade').textContent = '85%';
             
-            // Alertas
+            // Alertas (apenas TL)
             const alertasDiv = document.getElementById('alertas');
             alertasDiv.innerHTML = '';
             let alertCount = 0;
@@ -679,10 +643,10 @@
             }
             document.getElementById('alertasSection').style.display = 'block';
             
-            // Tabela KM
+            // Tabela KM (apenas TL)
             const tabelaBody = document.getElementById('tabelaKMBody');
             tabelaBody.innerHTML = '';
-            dados.forEach(d => {
+            dadosTL.forEach(d => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${d.OP}</td>
@@ -697,13 +661,13 @@
                 tabelaBody.appendChild(tr);
             });
             
-            // Tabela Motoristas
+            // Tabela Motoristas (apenas TL)
             const motoristasMap = {};
-            dados.forEach(d => {
-                const key = `${d.OP}-${d.MOTORISTA}`;
+            dadosTL.forEach(d => {
+                const key = d.MOTORISTA;
                 if (!motoristasMap[key]) {
                     motoristasMap[key] = {
-                        op: d.OP,
+                        op: 'TL',
                         motorista: d.MOTORISTA,
                         entregas: 0,
                         km: 0,
@@ -735,9 +699,9 @@
         }
         
         function gerarGraficos() {
-            // KM por Veículo
+            // KM por Veículo (apenas TL)
             const kmPorVeiculo = {};
-            dados.forEach(d => {
+            dadosTL.forEach(d => {
                 kmPorVeiculo[d.VEICULO] = (kmPorVeiculo[d.VEICULO] || 0) + (parseFloat(d.KM_PERCORRIDO) || 0);
             });
             
@@ -766,9 +730,9 @@
                 }
             });
             
-            // Entregas por Motorista
+            // Entregas por Motorista (apenas TL)
             const entregasPorMotorista = {};
-            dados.forEach(d => {
+            dadosTL.forEach(d => {
                 entregasPorMotorista[d.MOTORISTA] = (entregasPorMotorista[d.MOTORISTA] || 0) + 1;
             });
             
