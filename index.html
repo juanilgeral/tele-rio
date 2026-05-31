@@ -456,10 +456,7 @@
                     <div class="indicador-label">Utilização Frota</div>
                     <div class="indicador-value" id="utilizacao">—%</div>
                 </div>
-                <div class="indicador">
-                    <div class="indicador-label">Custo por KM</div>
-                    <div class="indicador-value" id="custoPorKm">R$ —</div>
-                </div>
+
                 <div class="indicador">
                     <div class="indicador-label">Disponibilidade</div>
                     <div class="indicador-value" id="disponibilidade">—%</div>
@@ -656,7 +653,7 @@
             // Indicadores
             document.getElementById('pontualidade').textContent = '92%';
             document.getElementById('utilizacao').textContent = ((entregasTL / (veiculosTL * 5)) * 100).toFixed(0);
-            document.getElementById('custoPorKm').textContent = 'R$ 2,50';
+
             document.getElementById('disponibilidade').textContent = '85%';
             
             // Alertas
