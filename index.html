@@ -1,784 +1,383 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard TL - FleetControl Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080f18">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Juanil Tele-Rio — Acompanhamento de Frota</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script type="module">
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getFirestore, collection, query, where, onSnapshot }
+                               from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+    const FIREBASE_CONFIG = {
+      apiKey:            "AIzaSyA211lxR6Nk3bWH8lJWzYkHTMnlfHPar8A",
+      authDomain:        "frota-field.firebaseapp.com",
+      projectId:         "frota-field",
+      storageBucket:     "frota-field.firebasestorage.app",
+      messagingSenderId: "642844753455",
+      appId:             "1:642844753455:web:9be3f31a8bb735dfbd50da"
+    };
+
+    const OP = 'TL';
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db  = getFirestore(app);
+
+    let todosLanc    = [];
+    let abaPainel    = 'dashboard';
+    let dataProg     = null;
+    let veiculosProg = [];
+    let unsubProg    = null;
+
+    const $ = id => document.getElementById(id);
+
+    function nowBR() {
+      return new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Sao_Paulo'}));
+    }
+    function hojeISO() {
+      const d = nowBR();
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`;
+    }
+    function dataFutura(n) {
+      const d = nowBR();
+      d.setDate(d.getDate() + n);
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`;
+    }
+    function labelData(iso) {
+      const [dd,mm,aa] = iso.split('/');
+      const d = new Date(2000+parseInt(aa), parseInt(mm)-1, parseInt(dd));
+      const dias = ['dom','seg','ter','qua','qui','sex','sáb'];
+      return `${dd}/${mm} (${dias[d.getDay()]})`;
+    }
+
+    function calcStatus(v) {
+      const agora  = new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Sao_Paulo'}));
+      const hMin   = agora.getHours()*60 + agora.getMinutes();
+      const tMin   = t => { if(!t) return null; const p=t.split(':').map(Number); return p[0]*60+(p[1]||0); };
+      const isHoje = !v.DATA || v.DATA === hojeISO();
+
+      if (v.CHEGADA_VEICULO_CD && v.KM_CHEGADA) return {key:'concluido', label:'Concluído',   cor:'#34d399'};
+      if (v.SAIDA_1 || v.ABERTURA_1)            return {key:'rota',      label:'Em rota',     cor:'#fbbf24'};
+
+      const saidaMin = tMin(v.SAIDA_VEICULO_CD);
+      if (isHoje && saidaMin !== null && hMin >= saidaMin) return {key:'transito', label:'Em trânsito', cor:'#f97316'};
+
+      const pontoOnMin = tMin(v.PONTO_ON);
+      if (isHoje && pontoOnMin !== null && hMin >= pontoOnMin) return {key:'iniciado', label:'Iniciado', cor:'#4da6ff'};
+
+      return {key:'pendente', label:'Pendente', cor:'#6b8099'};
+    }
+
+    function iniciar() {
+      iniciarRelogio();
+      escutarLancamentos();
+      dataProg = dataFutura(1);
+    }
+
+    function iniciarRelogio() {
+      const el = $('relogio');
+      const tick = () => {
+        const d = new Date();
+        if(el) el.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      };
+      tick(); setInterval(tick, 1000);
+    }
+
+    function escutarLancamentos() {
+      onSnapshot(
+        query(collection(db,'lancamentos'), where('DATA','==',hojeISO()), where('OP','==',OP)),
+        snap => {
+          todosLanc = [];
+          snap.forEach(d => todosLanc.push({fid:d.id,...d.data()}));
+          renderCards(); renderTabela();
         }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1f3a;
-            color: #fff;
-            padding: 20px;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid #f59e0b;
-        }
-        
-        .header h1 {
-            font-size: 1.8em;
-            color: #f59e0b;
-        }
-        
-        .header-info {
-            text-align: right;
-            font-size: 0.9em;
-            color: #ccc;
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-        
-        .sync-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .sync-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #22c55e;
-            animation: pulse 2s infinite;
-        }
-        
-        .sync-indicator.syncing {
-            background: #f59e0b;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        /* VISÃO GERAL DO DIA */
-        .visao-geral {
-            background: #252d47;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .visao-geral h2 {
-            color: #f59e0b;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-            border-bottom: 2px solid #f59e0b;
-            padding-bottom: 10px;
-        }
-        
-        .ops-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .op-card {
-            background: linear-gradient(135deg, #1a1f3a 0%, #252d47 100%);
-            padding: 20px;
-            border-radius: 8px;
-            border-top: 3px solid #f59e0b;
-            text-align: center;
-        }
-        
-        .op-card.cv { border-top-color: #3b82f6; }
-        .op-card.ls { border-top-color: #10b981; }
-        .op-card.tl { border-top-color: #f59e0b; }
-        .op-card.ht { border-top-color: #ef4444; }
-        
-        .op-name {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .op-name.cv { color: #3b82f6; }
-        .op-name.ls { color: #10b981; }
-        .op-name.tl { color: #f59e0b; }
-        .op-name.ht { color: #ef4444; }
-        
-        .op-info {
-            font-size: 0.85em;
-            color: #aaa;
-            margin-bottom: 10px;
-        }
-        
-        .op-reserve {
-            color: #3b82f6;
-            font-size: 0.9em;
-            margin-top: 10px;
-        }
-        
-        .metricas-dia {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .metrica-item {
-            background: #1a1f3a;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            border-left: 3px solid #f59e0b;
-        }
-        
-        .metrica-icon {
-            font-size: 1.5em;
-            margin-bottom: 8px;
-        }
-        
-        .metrica-valor {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #f59e0b;
-            margin-bottom: 5px;
-        }
-        
-        .metrica-label {
-            font-size: 0.75em;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .kpis {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .kpi-card {
-            background: #252d47;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #f59e0b;
-            text-align: center;
-        }
-        
-        .kpi-label {
-            font-size: 0.85em;
-            color: #aaa;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .kpi-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #f59e0b;
-        }
-        
-        .section {
-            background: #252d47;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .section h2 {
-            color: #f59e0b;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-            border-bottom: 2px solid #f59e0b;
-            padding-bottom: 10px;
-        }
-        
-        .charts {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .chart-container {
-            background: #1a1f3a;
-            padding: 15px;
-            border-radius: 8px;
-            position: relative;
-            height: 300px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            background: #1a1f3a;
-        }
-        
-        table th {
-            background: #d97706;
-            color: #1a1f3a;
-            padding: 12px;
-            text-align: left;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        
-        table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #444;
-            font-size: 0.9em;
-        }
-        
-        table tr:hover {
-            background: #2d3a54;
-        }
-        
-        .alert {
-            background: #7f1d1d;
-            border-left: 4px solid #dc2626;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 4px;
-            color: #fca5a5;
-        }
-        
-        .alert.warning {
-            background: #78350f;
-            border-left-color: #f59e0b;
-            color: #fcd34d;
-        }
-        
-        .indicadores {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .indicador {
-            background: #1a1f3a;
-            padding: 15px;
-            border-radius: 4px;
-            border-left: 3px solid #f59e0b;
-            text-align: center;
-        }
-        
-        .indicador-label {
-            font-size: 0.8em;
-            color: #aaa;
-            margin-bottom: 8px;
-        }
-        
-        .indicador-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #f59e0b;
-        }
-        
-        .sync-banner {
-            background: #78350f;
-            border: 2px solid #f59e0b;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .sync-banner.show {
-            display: flex;
-        }
-        
-        .sync-banner.spinner::before {
-            content: '';
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f59e0b;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-    </style>
+      );
+    }
+
+    window.irAba = (aba) => {
+      abaPainel = aba;
+      ['dashboard','programacao'].forEach(a => {
+        const btn = $('aba-'+a);
+        const sec = $('sec-'+a);
+        if(btn) btn.classList.toggle('ativa', a===aba);
+        if(sec) sec.style.display = a===aba ? 'block' : 'none';
+      });
+      if (aba==='programacao') {
+        dataProg = dataProg || dataFutura(1);
+        renderDatePicker();
+        carregarProg();
+      }
+    };
+
+    function renderCards() {
+      $('c-total').textContent     = todosLanc.length;
+      $('c-concluido').textContent = todosLanc.filter(v=>calcStatus(v).key==='concluido').length;
+      $('c-rota').textContent      = todosLanc.filter(v=>['rota','transito','iniciado'].includes(calcStatus(v).key)).length;
+      $('c-pendente').textContent  = todosLanc.filter(v=>calcStatus(v).key==='pendente').length;
+    }
+
+    function renderTabela() {
+      const lista = [...todosLanc].sort((a,b) => {
+        const ord={pendente:0,iniciado:1,transito:2,rota:3,concluido:4};
+        return (ord[calcStatus(a).key]||0) - (ord[calcStatus(b).key]||0);
+      });
+      const tbody = $('tbody');
+      $('cnt-label').textContent = `${lista.length} veículo${lista.length!==1?'s':''}`;
+      if (!lista.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-row">Nenhum veículo em operação hoje.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = lista.map(v => {
+        const st = calcStatus(v);
+        return `<tr class="tr-data" onclick="abrirDetalhe('${v.fid}','hoje')">
+          <td class="col-placa">${v.VEICULO||'—'}</td>
+          <td>${v.MOTORISTA||'—'}</td>
+          <td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.DESTINO||'—'}</td>
+          <td class="mono">${v.PONTO_ON||'—'}</td>
+          <td class="mono">${v.SAIDA_VEICULO_CD||'—'}</td>
+          <td class="mono">${v.CHEGADA_VEICULO_CD||'—'}</td>
+          <td class="mono">${v.KM_PERCORRIDO?v.KM_PERCORRIDO+' km':'—'}</td>
+          <td><span class="st-dot" style="background:${st.cor}"></span>${st.label}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderDatePicker() {
+      const c = $('date-picker'); if(!c) return;
+      c.innerHTML = [0,1,2,3].map(n => {
+        const iso = dataFutura(n);
+        const lbl = n===0 ? `Hoje ${labelData(iso)}` : labelData(iso);
+        return `<button class="btn-data${iso===dataProg?' btn-data-ativa':''}" onclick="selecionarData('${iso}')">${lbl}</button>`;
+      }).join('');
+    }
+
+    window.selecionarData = (iso) => {
+      dataProg = iso;
+      renderDatePicker();
+      carregarProg();
+    };
+
+    function carregarProg() {
+      if (!dataProg) return;
+      if (unsubProg) { unsubProg(); unsubProg=null; }
+      const q = query(collection(db,'lancamentos'), where('DATA','==',dataProg), where('OP','==',OP));
+      unsubProg = onSnapshot(q, snap => {
+        veiculosProg = [];
+        snap.forEach(d => veiculosProg.push({fid:d.id,...d.data()}));
+        renderProgLista();
+      });
+    }
+
+    function renderProgLista() {
+      const lista = $('prog-lista'); if(!lista) return;
+      if (!veiculosProg.length) {
+        lista.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">📅 Nenhum veículo programado para ${labelData(dataProg)}.</div>`;
+        return;
+      }
+      lista.innerHTML = `<table><thead><tr>
+        <th>Veículo</th><th>Motorista</th><th>Destino</th><th>Ponto ON</th>
+        <th>Saída CD</th><th>Chegada CD</th><th>KM</th><th>Status</th>
+      </tr></thead><tbody>${veiculosProg.map(v => {
+        const st = calcStatus(v);
+        return `<tr class="tr-data" onclick="abrirDetalhe('${v.fid}','prog')">
+          <td class="col-placa">${v.VEICULO||'—'}</td>
+          <td>${v.MOTORISTA||'—'}</td>
+          <td style="font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.DESTINO||'—'}</td>
+          <td class="mono">${v.PONTO_ON||'—'}</td>
+          <td class="mono">${v.SAIDA_VEICULO_CD||'—'}</td>
+          <td class="mono">${v.CHEGADA_VEICULO_CD||'—'}</td>
+          <td class="mono">${v.KM_PERCORRIDO?v.KM_PERCORRIDO+' km':'—'}</td>
+          <td><span class="st-dot" style="background:${st.cor}"></span>${st.label}</td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+    }
+
+    window.abrirDetalhe = (fid, origem) => {
+      const lista = origem==='prog' ? veiculosProg : todosLanc;
+      const v = lista.find(x=>x.fid===fid);
+      if(!v) return;
+
+      const st = calcStatus(v);
+      const isProg = v.DATA && v.DATA !== hojeISO();
+
+      $('det-titulo').textContent = v.VEICULO||'—';
+      $('det-sub').textContent    = `${v.MOTORISTA||'—'} · ${v.DATA||''}${isProg?' 📅':''}`;
+      $('det-st').innerHTML       = `<span class="st-dot" style="background:${st.cor}"></span>${st.label}`;
+
+      const row = (label, val) => val ? `<div class="det-row"><span class="det-l">${label}</span><span class="det-v">${val}</span></div>` : '';
+      const sep = (label) => `<div class="det-sec">${label}</div>`;
+
+      $('det-campos').innerHTML = `
+        ${sep('📋 Dados da Rota')}
+        ${row('Destino', v.DESTINO)}
+        ${row('Ponto ON', v.PONTO_ON)}
+        ${row('Prev. Refeição', v.PREVISAO_REFEICAO)}
+        ${row('Saída Veículo CD', v.SAIDA_VEICULO_CD)}
+        ${row('SM', v.SM)}
+        ${sep('🏪 Lojas')}
+        ${row('Prev. 1ª Loja', v.LOJA_1)}
+        ${row('Abertura 1ª Loja', v.ABERTURA_1)}
+        ${row('Fechado 1ª Loja', v.FECHADO_1)}
+        ${row('Saída 1ª Loja', v.SAIDA_1)}
+        ${row('Total Loja 1', v.TOTAL_LOJA_1)}
+        ${row('Prev. 2ª Loja', v.LOJA_2)}
+        ${row('Abertura 2ª Loja', v.ABERTURA_2)}
+        ${row('Fechado 2ª Loja', v.FECHADO_2)}
+        ${row('Saída 2ª Loja', v.SAIDA_2)}
+        ${row('Total Loja 2', v.TOTAL_LOJA_2)}
+        ${row('Total Lojas', v.TOTAL_LOJA)}
+        ${sep('🏁 Retorno')}
+        ${row('Chegada Veículo CD', v.CHEGADA_VEICULO_CD)}
+        ${row('Ponto OFF', v.PONTO_OFF_MOT)}
+        ${row('Hora Total', v.HORA_TOTAL_MOTORISTA)}
+        ${row('KM Saída', v.KM_SAIDA)}
+        ${row('KM Chegada', v.KM_CHEGADA)}
+        ${row('KM Percorrido', v.KM_PERCORRIDO ? v.KM_PERCORRIDO+' km' : '')}
+        ${row('Observações', v.OBSERVACOES)}
+      `;
+      $('overlay').style.display='flex';
+    };
+
+    window.fecharDetalhe = () => { $('overlay').style.display='none'; };
+
+    iniciar();
+
+    window.mostrarLegenda = () => { document.getElementById('legenda-overlay').style.display='flex'; };
+    window.fecharLegenda  = () => { document.getElementById('legenda-overlay').style.display='none'; };
+  </script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080f18;--surf:#0e1a28;--card:#11202f;--bord:#1b2e42;
+      --acc:#ff8c42;--text:#dde6ef;--muted:#5a7a99;--danger:#e85555;
+    }
+    html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
+    .mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surf);border-bottom:1px solid var(--bord);position:sticky;top:0;z-index:100}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-nome{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;color:var(--acc)}
+    .brand-sub{font-size:12px;color:var(--muted);letter-spacing:1px}
+    .live-badge{background:#c0152a;color:white;font-size:11px;font-weight:900;padding:4px 10px;border-radius:20px;letter-spacing:1px;animation:pulse 1.2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+    #relogio{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--acc)}
+    .abas{display:flex;padding:0 24px;background:var(--surf);border-bottom:1px solid var(--bord)}
+    .aba-btn{padding:12px 20px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-size:14px;font-weight:500;transition:color .2s}
+    .aba-btn.ativa{color:var(--acc);border-bottom-color:var(--acc)}
+    .aba-btn:hover{color:var(--text)}
+    .resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px 24px 0}
+    .cs{background:var(--card);border:1px solid var(--bord);border-radius:12px;padding:18px}
+    .cs .num{font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:900;line-height:1}
+    .cs .lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:4px}
+    .n-total{color:var(--text)}.n-ok{color:#34d399}.n-rota{color:#fbbf24}.n-pend{color:var(--muted)}
+    .tab-wrap{padding:20px 24px 40px;overflow-x:auto}
+    .cnt-label{font-size:12px;color:var(--muted);margin-bottom:10px}
+    table{width:100%;border-collapse:collapse}
+    thead th{text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--bord);white-space:nowrap}
+    .tr-data td{padding:11px 12px;border-bottom:1px solid #0d1e2e;font-size:14px;vertical-align:middle}
+    .tr-data:hover{background:#ffffff05;cursor:pointer}
+    .col-placa{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px}
+    .st-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+    .empty-row{text-align:center;padding:60px;color:var(--muted)}
+    #sec-programacao{display:none;padding:20px 24px 40px}
+    .date-picker-wrap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .btn-data{padding:8px 16px;background:var(--card);border:1px solid var(--bord);border-radius:8px;color:var(--muted);font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:600;cursor:pointer;transition:all .2s}
+    .btn-data:hover{border-color:var(--acc);color:var(--acc)}
+    .btn-data-ativa{background:#ff8c4220!important;border-color:#ff8c42!important;color:#ff8c42!important}
+    #overlay{display:none;position:fixed;inset:0;background:#000a;z-index:200;align-items:flex-end;justify-content:center}
+    .det-panel{background:var(--surf);border:1px solid var(--bord);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:28px}
+    .det-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+    .det-titulo{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px}
+    .det-sub{font-size:13px;color:var(--muted);margin-top:2px}
+    .det-st{display:flex;align-items:center;font-size:13px;margin-top:6px}
+    .btn-fechar{background:none;border:1px solid var(--bord);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer}
+    .det-sec{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:14px 0 6px;border-bottom:1px solid var(--bord);margin-bottom:8px}
+    .det-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0d1e2e}
+    .det-l{font-size:12px;color:var(--muted)}.det-v{font-size:13px;font-weight:500;text-align:right}
+    @media(max-width:768px){
+      .resumo{grid-template-columns:repeat(2,1fr)}
+      .tab-wrap{padding:12px}
+      .brand-sub{display:none}
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <h1>📊 Dashboard TL</h1>
-            <p style="color: #aaa; margin-top: 5px;">FleetControl Pro - Operação de Transporte e Logística</p>
-        </div>
-        <div class="header-info">
-            <div style="display: flex; gap: 20px; align-items: flex-start;">
-                <div>
-                    <div class="sync-status">
-                        <div class="sync-indicator" id="syncIndicator"></div>
-                        <span id="syncText">● AO VIVO</span>
-                    </div>
-                    <div id="hora" style="margin-top: 5px; font-size: 0.9em;"></div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 0.85em; color: #f59e0b; margin-bottom: 5px;">
-                        ☁️ <span id="registrosCount">—</span> registros · <span id="diasCount">—</span> dias
-                    </div>
-                    <div style="font-size: 0.8em; color: #999;">
-                        Próxima sincronização em <span id="proximaSincronizacao">3:00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="container">
-        <!-- Banner de Sincronização -->
-        <div class="sync-banner" id="syncBanner">
-            <div class="spinner"></div>
-            <span>☁️ Sincronizando dados...</span>
-        </div>
-        
-        <!-- VISÃO GERAL DO DIA - TL -->
-        <div class="visao-geral">
-            <h2>📋 VISÃO GERAL DO DIA - TL</h2>
-            
-            <!-- Métricas do Dia TL -->
-            <div class="metricas-dia">
-                <div class="metrica-item">
-                    <div class="metrica-icon">🚗</div>
-                    <div class="metrica-valor" id="tlVeiculos">—</div>
-                    <div class="metrica-label">Veículos</div>
-                </div>
-                <div class="metrica-item">
-                    <div class="metrica-icon">🚛</div>
-                    <div class="metrica-valor" id="tlEmTransito">—</div>
-                    <div class="metrica-label">Em Trânsito</div>
-                </div>
-                <div class="metrica-item">
-                    <div class="metrica-icon">🕐</div>
-                    <div class="metrica-valor" id="tlProgramadas">—</div>
-                    <div class="metrica-label">Programadas</div>
-                </div>
-                <div class="metrica-item">
-                    <div class="metrica-icon">👨‍✈️</div>
-                    <div class="metrica-valor" id="tlMotoristas">—</div>
-                    <div class="metrica-label">Motoristas</div>
-                </div>
-                <div class="metrica-item">
-                    <div class="metrica-icon">📌</div>
-                    <div class="metrica-valor" id="tlRotas">—</div>
-                    <div class="metrica-label">Entregas</div>
-                </div>
-                <div class="metrica-item">
-                    <div class="metrica-icon">⏱️</div>
-                    <div class="metrica-valor" id="tlTempoMedioLoja">—</div>
-                    <div class="metrica-label">Tempo Médio Loja</div>
-                </div>
-                <div class="metrica-item">
-                    <div class="metrica-icon">🏪</div>
-                    <div class="metrica-valor" id="tlLojasAtendidas">—</div>
-                    <div class="metrica-label">Lojas Atendidas</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- KPIs Principais -->
-        <div class="kpis" id="kpis">
-            <div class="kpi-card">
-                <div class="kpi-label">KM Total</div>
-                <div class="kpi-value" id="kmTotal">—</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Entregas</div>
-                <div class="kpi-value" id="totalEntregas">—</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Tempo Médio</div>
-                <div class="kpi-value" id="tempoMedio">—h</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">KM Médio</div>
-                <div class="kpi-value" id="kmMedio">—</div>
-            </div>
-        </div>
-        
-        <!-- Indicadores Operacionais -->
-        <div class="section">
-            <h2>📡 Indicadores Operacionais</h2>
-            <div class="indicadores">
-                <div class="indicador">
-                    <div class="indicador-label">Pontualidade</div>
-                    <div class="indicador-value" id="pontualidade">—%</div>
-                </div>
-                <div class="indicador">
-                    <div class="indicador-label">Utilização Frota</div>
-                    <div class="indicador-value" id="utilizacao">—%</div>
-                </div>
 
-                <div class="indicador">
-                    <div class="indicador-label">Disponibilidade</div>
-                    <div class="indicador-value" id="disponibilidade">—%</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Alertas -->
-        <div class="section" id="alertasSection" style="display: none;">
-            <h2>🚨 Alertas Operacionais</h2>
-            <div id="alertas"></div>
-        </div>
-        
-        <!-- Gráficos -->
-        <div class="section">
-            <h2>📊 Análises Visuais</h2>
-            <div class="charts">
-                <div class="chart-container">
-                    <canvas id="kmChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <canvas id="motoristasChart"></canvas>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Controle de KM -->
-        <div class="section">
-            <h2>🚗 Controle de KM por Veículo</h2>
-            <table id="tabelaKM">
-                <thead>
-                    <tr>
-                        <th>OP</th>
-                        <th>Veículo</th>
-                        <th>Motorista</th>
-                        <th>KM</th>
-                        <th>Tempo Total</th>
-                        <th>Loja</th>
-                        <th>Saída</th>
-                        <th>Chegada</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaKMBody">
-                    <tr><td colspan="8" style="text-align: center; color: #aaa;">Carregando dados...</td></tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Performance por Motorista -->
-        <div class="section">
-            <h2>👨‍✈️ Performance por Motorista</h2>
-            <table id="tabelaMotoristas">
-                <thead>
-                    <tr>
-                        <th>OP</th>
-                        <th>Motorista</th>
-                        <th>Entregas</th>
-                        <th>KM Total</th>
-                        <th>Tempo Total</th>
-                        <th>Produtividade</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaMotoristasBody">
-                    <tr><td colspan="6" style="text-align: center; color: #aaa;">Carregando dados...</td></tr>
-                </tbody>
-            </table>
-        </div>
+<div class="topbar">
+  <div class="brand">
+    <div>
+      <div class="brand-nome"><span style="color:#4da6ff">JUANIL</span> <span style="color:#34d399">TELE-RIO</span></div>
+      <div class="brand-sub">Acompanhamento de Frota · Ao Vivo</div>
     </div>
-    
-    <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTd77MkT5hd6gzTkMfzX2BVWY5Hqqfo3NluQY58mnOklN8--hPVIoe2CfzkbttnucJKbnJFiaPEWSmR/pub?gid=1559964021&single=true&output=csv';
-        const SYNC_INTERVAL = 3 * 60 * 1000; // 3 minutos
-        
-        let dados = [];
-        let kmChart = null;
-        let motoristasChart = null;
-        let proximaSincronizacao = SYNC_INTERVAL / 1000;
-        
-        // Atualizar hora
-        setInterval(() => {
-            const agora = new Date();
-            document.getElementById('hora').textContent = agora.toLocaleString('pt-BR');
-        }, 1000);
-        
-        // Contador de sincronização
-        setInterval(() => {
-            proximaSincronizacao--;
-            const minutos = Math.floor(proximaSincronizacao / 60);
-            const segundos = proximaSincronizacao % 60;
-            document.getElementById('proximaSincronizacao').textContent = 
-                `${minutos}:${segundos.toString().padStart(2, '0')}`;
-            
-            if (proximaSincronizacao <= 0) {
-                sincronizar();
-                proximaSincronizacao = SYNC_INTERVAL / 1000;
-            }
-        }, 1000);
-        
-        // Sincronizar na primeira carga
-        window.addEventListener('load', sincronizar);
-        
-        function sincronizar() {
-            const banner = document.getElementById('syncBanner');
-            const indicator = document.getElementById('syncIndicator');
-            const syncText = document.getElementById('syncText');
-            
-            banner.classList.add('show');
-            indicator.classList.add('syncing');
-            syncText.textContent = '⏳ Sincronizando...';
-            
-            fetch(SHEET_URL)
-                .then(response => response.text())
-                .then(csv => {
-                    processarDados(csv);
-                    
-                    // Sucesso
-                    banner.classList.remove('show');
-                    indicator.classList.remove('syncing');
-                    syncText.textContent = '● AO VIVO';
-                })
-                .catch(error => {
-                    console.error('Erro ao sincronizar:', error);
-                    banner.classList.remove('show');
-                    indicator.classList.remove('syncing');
-                    syncText.textContent = '⚠️ ERRO NA SINCRONIZAÇÃO';
-                    setTimeout(() => {
-                        syncText.textContent = '● AO VIVO';
-                    }, 5000);
-                });
-        }
-        
-        function processarDados(csv) {
-            const linhas = csv.trim().split('\n');
-            const headers = linhas[0].split(',').map(h => h.trim());
-            
-            dados = [];
-            for (let i = 1; i < linhas.length; i++) {
-                const valores = linhas[i].split(',');
-                const obj = {};
-                headers.forEach((header, idx) => {
-                    obj[header] = valores[idx] ? valores[idx].trim() : '';
-                });
-                dados.push(obj);
-            }
-            
-            atualizarDashboard();
-        }
-        
-        function atualizarDashboard() {
-            if (dados.length === 0) return;
-            
-            // Atualizar contadores de registros e dias
-            const totalRegistros = dados.length;
-            const totalDias = new Set(dados.map(d => d.DATA)).size;
-            document.getElementById('registrosCount').textContent = totalRegistros.toLocaleString('pt-BR');
-            document.getElementById('diasCount').textContent = totalDias;
-            
-            // Filtrar apenas TL
-            const dadosTL = dados.filter(d => d.OP === 'TL');
-            const veiculosTL = new Set(dadosTL.map(d => d.VEICULO)).size;
-            const motoristasTL = new Set(dadosTL.map(d => d.MOTORISTA)).size;
-            const kmTotalTL = dadosTL.reduce((sum, d) => sum + (parseFloat(d.KM_PERCORRIDO) || 0), 0);
-            const entregasTL = dadosTL.length;
-            
-            // Métricas TL
-            const lojasPorTL = {};
-            let tempoTotalEmLoja = 0;
-            
-            dadosTL.forEach(d => {
-                const loja = d['1ª_LOJA'] || 'N/A';
-                if (loja && loja !== 'N/A') {
-                    lojasPorTL[loja] = (lojasPorTL[loja] || 0) + 1;
-                    // Estimando tempo em loja (pode ser ajustado conforme seus dados)
-                    tempoTotalEmLoja += 1.5; // 1h 30m por parada
-                }
-            });
-            
-            const lojasAtendidas = Object.keys(lojasPorTL).length;
-            const tempoMedioLoja = lojasAtendidas > 0 ? (tempoTotalEmLoja / entregasTL).toFixed(2) : 0;
-            
-            document.getElementById('tlVeiculos').textContent = veiculosTL;
-            document.getElementById('tlEmTransito').textContent = Math.ceil(entregasTL * 0.6);
-            document.getElementById('tlProgramadas').textContent = Math.ceil(entregasTL * 0.4);
-            document.getElementById('tlMotoristas').textContent = motoristasTL;
-            document.getElementById('tlRotas').textContent = entregasTL;
-            document.getElementById('tlTempoMedioLoja').textContent = tempoMedioLoja + 'h';
-            document.getElementById('tlLojasAtendidas').textContent = lojasAtendidas;
-            
-            // KPIs Principais
-            document.getElementById('kmTotal').textContent = kmTotalTL.toFixed(0);
-            document.getElementById('totalEntregas').textContent = entregasTL;
-            document.getElementById('tempoMedio').textContent = '10';
-            document.getElementById('kmMedio').textContent = (kmTotalTL / veiculosTL).toFixed(0);
-            
-            // Indicadores
-            document.getElementById('pontualidade').textContent = '92%';
-            document.getElementById('utilizacao').textContent = ((entregasTL / (veiculosTL * 5)) * 100).toFixed(0);
+    <span class="live-badge">● AO VIVO</span>
+  </div>
+  <button onclick="mostrarLegenda()" style="background:none;border:1px solid var(--bord);color:var(--muted);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px">?</button>
+  <span id="relogio">00:00</span>
+</div>
 
-            document.getElementById('disponibilidade').textContent = '85%';
-            
-            // Alertas (apenas TL)
-            const alertasDiv = document.getElementById('alertas');
-            alertasDiv.innerHTML = '';
-            let alertCount = 0;
-            
-            dadosTL.forEach(d => {
-                if (alertCount >= 5) return;
-                const km = parseFloat(d.KM_PERCORRIDO) || 0;
-                if (km > 200) {
-                    alertasDiv.innerHTML += `
-                        <div class="alert warning">
-                            ⚠️ Veículo ${d.VEICULO} rodou ${km}km (acima do esperado)
-                        </div>
-                    `;
-                    alertCount++;
-                }
-            });
-            
-            if (alertCount === 0) {
-                alertasDiv.innerHTML = '<div class="alert warning">✅ Nenhum alerta crítico</div>';
-            }
-            document.getElementById('alertasSection').style.display = 'block';
-            
-            // Tabela KM (apenas TL)
-            const tabelaBody = document.getElementById('tabelaKMBody');
-            tabelaBody.innerHTML = '';
-            dadosTL.forEach(d => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${d.OP}</td>
-                    <td>${d.VEICULO}</td>
-                    <td>${d.MOTORISTA}</td>
-                    <td>${d.KM_PERCORRIDO}</td>
-                    <td>${d.HORA_TOTAL_MOTORISTA}</td>
-                    <td>${d['1ª_LOJA'] || '-'}</td>
-                    <td>${d['SAÍDA_VEÍCULO_CD']}</td>
-                    <td>${d.CHEGADA_VEÍCULO_CD}</td>
-                `;
-                tabelaBody.appendChild(tr);
-            });
-            
-            // Tabela Motoristas (apenas TL)
-            const motoristasMap = {};
-            dadosTL.forEach(d => {
-                const key = d.MOTORISTA;
-                if (!motoristasMap[key]) {
-                    motoristasMap[key] = {
-                        op: 'TL',
-                        motorista: d.MOTORISTA,
-                        entregas: 0,
-                        km: 0,
-                        tempo: 0
-                    };
-                }
-                motoristasMap[key].entregas++;
-                motoristasMap[key].km += parseFloat(d.KM_PERCORRIDO) || 0;
-            });
-            
-            const tabelaMotoristasBody = document.getElementById('tabelaMotoristasBody');
-            tabelaMotoristasBody.innerHTML = '';
-            Object.keys(motoristasMap).forEach(key => {
-                const dados = motoristasMap[key];
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${dados.op}</td>
-                    <td>${dados.motorista}</td>
-                    <td>${dados.entregas}</td>
-                    <td>${dados.km.toFixed(0)}</td>
-                    <td>10h 30m</td>
-                    <td>${(dados.km / 10.5).toFixed(1)} km/h</td>
-                `;
-                tabelaMotoristasBody.appendChild(tr);
-            });
-            
-            // Gráficos
-            gerarGraficos();
-        }
-        
-        function gerarGraficos() {
-            // KM por Veículo (apenas TL)
-            const kmPorVeiculo = {};
-            dadosTL.forEach(d => {
-                kmPorVeiculo[d.VEICULO] = (kmPorVeiculo[d.VEICULO] || 0) + (parseFloat(d.KM_PERCORRIDO) || 0);
-            });
-            
-            const ctx1 = document.getElementById('kmChart').getContext('2d');
-            if (kmChart) kmChart.destroy();
-            kmChart = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(kmPorVeiculo).slice(0, 10),
-                    datasets: [{
-                        label: 'KM Rodado',
-                        data: Object.values(kmPorVeiculo).slice(0, 10),
-                        backgroundColor: '#f59e0b',
-                        borderColor: '#d97706',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: true } },
-                    scales: {
-                        y: { ticks: { color: '#aaa' }, grid: { color: '#444' } },
-                        x: { ticks: { color: '#aaa' }, grid: { color: '#444' } }
-                    }
-                }
-            });
-            
-            // Entregas por Motorista (apenas TL)
-            const entregasPorMotorista = {};
-            dadosTL.forEach(d => {
-                entregasPorMotorista[d.MOTORISTA] = (entregasPorMotorista[d.MOTORISTA] || 0) + 1;
-            });
-            
-            const ctx2 = document.getElementById('motoristasChart').getContext('2d');
-            if (motoristasChart) motoristasChart.destroy();
-            motoristasChart = new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(entregasPorMotorista).slice(0, 10),
-                    datasets: [{
-                        label: 'Entregas',
-                        data: Object.values(entregasPorMotorista).slice(0, 10),
-                        backgroundColor: '#d97706',
-                        borderColor: '#b45309',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: true } },
-                    scales: {
-                        y: { ticks: { color: '#aaa' }, grid: { color: '#444' } },
-                        x: { ticks: { color: '#aaa' }, grid: { color: '#444' } }
-                    }
-                }
-            });
-        }
-    </script>
+<div class="abas">
+  <button id="aba-dashboard"   class="aba-btn ativa" onclick="irAba('dashboard')">📊 Dashboard</button>
+  <button id="aba-programacao" class="aba-btn"       onclick="irAba('programacao')">📅 Programação</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="sec-dashboard">
+  <div class="resumo">
+    <div class="cs"><div class="num n-total"  id="c-total">0</div><div class="lbl">Total hoje</div></div>
+    <div class="cs"><div class="num n-ok"     id="c-concluido">0</div><div class="lbl">Concluídos</div></div>
+    <div class="cs"><div class="num n-rota"   id="c-rota">0</div><div class="lbl">Em operação</div></div>
+    <div class="cs"><div class="num n-pend"   id="c-pendente">0</div><div class="lbl">Pendentes</div></div>
+  </div>
+  <div class="tab-wrap">
+    <div class="cnt-label" id="cnt-label">—</div>
+    <table>
+      <thead>
+        <tr><th>Veículo</th><th>Motorista</th><th>Destino</th><th>Ponto ON</th><th>Saída CD</th><th>Chegada CD</th><th>KM</th><th>Status</th></tr>
+      </thead>
+      <tbody id="tbody"><tr><td colspan="8" class="empty-row">Carregando...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PROGRAMAÇÃO -->
+<div id="sec-programacao">
+  <div class="date-picker-wrap" id="date-picker"></div>
+  <div id="prog-lista"><div style="text-align:center;padding:40px;color:var(--muted)">Selecione uma data acima</div></div>
+</div>
+
+<!-- OVERLAY DETALHE -->
+<div id="overlay" onclick="if(event.target===this)fecharDetalhe()">
+  <div class="det-panel">
+    <div class="det-hd">
+      <div>
+        <div class="det-titulo" id="det-titulo">—</div>
+        <div class="det-sub"    id="det-sub">—</div>
+        <div class="det-st"     id="det-st">—</div>
+      </div>
+      <button class="btn-fechar" onclick="fecharDetalhe()">✕ Fechar</button>
+    </div>
+    <div id="det-campos"></div>
+  </div>
+</div>
+
+
+<!-- LEGENDA MODAL -->
+<div id="legenda-overlay" onclick="if(event.target===this)fecharLegenda()" style="display:none;position:fixed;inset:0;background:#000a;z-index:500;align-items:center;justify-content:center">
+  <div style="background:#0e1a28;border:1px solid #1b2e42;border-radius:16px;padding:28px;width:90%;max-width:400px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;color:#dde6ef">📋 Legenda de Status</span>
+      <button onclick="fecharLegenda()" style="background:none;border:1px solid #1b2e42;color:#5a7a99;padding:6px 12px;border-radius:6px;cursor:pointer">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;height:12px;border-radius:50%;background:#6b8099;flex-shrink:0"></span><div><strong style="color:#dde6ef">Pendente</strong><div style="font-size:12px;color:#5a7a99">Lançamento programado — horário de saída ainda não chegou</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;height:12px;border-radius:50%;background:#4da6ff;flex-shrink:0"></span><div><strong style="color:#dde6ef">Iniciado</strong><div style="font-size:12px;color:#5a7a99">Motorista bateu o ponto — ainda no CD aguardando saída</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;height:12px;border-radius:50%;background:#f97316;flex-shrink:0"></span><div><strong style="color:#dde6ef">Em trânsito</strong><div style="font-size:12px;color:#5a7a99">Veículo saiu do CD e está a caminho da loja</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;height:12px;border-radius:50%;background:#fbbf24;flex-shrink:0"></span><div><strong style="color:#dde6ef">Em rota</strong><div style="font-size:12px;color:#5a7a99">Veículo está na loja realizando a entrega</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><span style="width:12px;height:12px;border-radius:50%;background:#34d399;flex-shrink:0"></span><div><strong style="color:#dde6ef">Concluído</strong><div style="font-size:12px;color:#5a7a99">Veículo retornou ao CD e KM registrado</div></div></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
